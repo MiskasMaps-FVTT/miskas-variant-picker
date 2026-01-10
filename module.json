@@ -1,0 +1,27 @@
+{
+  "id": "miskas-variant-picker",
+  "title": "Miska's Maps Variant Picker",
+  "description": "<p>Change variants of maps easily through the scene context menu</p>",
+  "version": "0.0.0",
+  "compatibility": {
+	 "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Miska's Maps",
+      "url": "https://www.miskasmaps.com",
+      "flags": {}
+    },
+    {
+      "name": "Eliot Fredman",
+      "email": "eliot.fredman@proton.me",
+      "discord": "katvef",
+      "flags": {}
+    }
+  ],
+  "esmodules": [
+	 "scripts/main.js"
+  ],
+  "url": "https://www.miskasmaps.com"
+}
