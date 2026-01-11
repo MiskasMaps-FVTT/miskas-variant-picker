@@ -48,8 +48,12 @@ export async function variantPicker(li) {
 	const mapVariants = new Map;
 
 	for (const map of maps) {
-		mapVariants.set(capitalizeFirstLetter(map.match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp$)")[0]), map);
+		mapVariants.set(capitalizeFirstLetter(map.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]), map);
 	}
 
-	changeSceneVariant(scene, await selectVariant(mapVariants));
+	if (!mapVariants.size) throw new Error("No variants found");
+	
+	const variant = await selectVariant(mapVariants);
+	if (!variant) return
+	changeSceneVariant(scene, );
 }
