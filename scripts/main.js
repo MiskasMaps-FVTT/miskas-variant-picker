@@ -11,7 +11,7 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 			if (src.search("/miskasmaps-") >= 0) return true
 			return false
 		},
-		name: "Change scene variant",
+		name: "Change Scene Variant",
 	});
 });
 
