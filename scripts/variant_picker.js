@@ -43,9 +43,9 @@ export async function variantPicker(li) {
 	const sceneId = "Scene." + li.dataset.entryId;
 	const scene = fromUuidSync(sceneId);
 	const background = scene.background.src;
-	const backgroundPath = background.slice(0, background.lastIndexOf("/"));
-	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", backgroundPath);
-	const maps = filePickerResult.files;
+	const variantPrefix = background.slice(str.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
+	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", background);
+	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
 	const variants = new Map;
 
 	for (const map of maps) {
