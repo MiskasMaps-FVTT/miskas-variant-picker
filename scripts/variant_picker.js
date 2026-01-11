@@ -1,11 +1,16 @@
 function getVariantName(str) {
 	if (typeof str !== "string") throw new Error("argument must be string");
-	str = str[0].toUpperCase() + str.slice(1);
-	return str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	const parts = map.split("-");
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i];
+		parts[i] = part[0].toUpperCase() + part.slice(1);
+	}
+
+	return parts.join(" ");
 }
 
 function changeSceneVariant(scene, backgroundURL) {
-	// Input validation checks
 	if (!(scene instanceof Scene)) throw new Error("Provided scene is not a scene")
 	if (typeof backgroundURL !== "string") throw new Error("Background is not a string")
 
@@ -43,7 +48,7 @@ export async function variantPicker(li) {
 	const sceneId = "Scene." + li.dataset.entryId;
 	const scene = fromUuidSync(sceneId);
 	const background = scene.background.src;
-	const variantPrefix = background.slice(str.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
+	const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
 	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", background);
 	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
 	const variants = new Map;
@@ -51,7 +56,7 @@ export async function variantPicker(li) {
 	for (const map of maps) {
 		variants.set(getVariantName(map), map);
 	}
-	variants.delete(selectVariant(background))
+	variants.delete(getVariantName(background))
 
 	if (!variants.size) throw new Error("No variants found");
 
