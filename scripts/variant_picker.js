@@ -48,8 +48,9 @@ export async function variantPicker(li) {
 	const mapVariants = new Map;
 
 	for (const map of maps) {
-		const variant = map.split("/");
-		mapVariants.set(capitalizeFirstLetter(variant.pop().match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp)")[0]), map);
+		console.log(map);
+		console.log(map.match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp$)")[0]);
+		mapVariants.set(capitalizeFirstLetter(map.match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp$)")[0]), map);
 	}
 
 	changeSceneVariant(scene, await selectVariant(mapVariants));
