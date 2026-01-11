@@ -48,8 +48,6 @@ export async function variantPicker(li) {
 	const mapVariants = new Map;
 
 	for (const map of maps) {
-		console.log(map);
-		console.log(map.match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp$)")[0]);
 		mapVariants.set(capitalizeFirstLetter(map.match("(?<=[0-9]+x[0-9]+[-\.]).*(?=\.webp$)")[0]), map);
 	}
 
