@@ -1,11 +1,16 @@
 function getVariantName(str) {
 	if (typeof str !== "string") throw new Error("argument must be string");
-	str = str[0].toUpperCase() + str.slice(1);
-	return str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	const parts = map.split("-");
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i];
+		parts[i] = part[0].toUpperCase() + part.slice(1);
+	}
+
+	return parts.join(" ");
 }
 
 function changeSceneVariant(scene, backgroundURL) {
-	// Input validation checks
 	if (!(scene instanceof Scene)) throw new Error("Provided scene is not a scene")
 	if (typeof backgroundURL !== "string") throw new Error("Background is not a string")
 
