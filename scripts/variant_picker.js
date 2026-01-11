@@ -1,6 +1,7 @@
-function capitalizeFirstLetter(str) {
+function getVariantName(str) {
 	if (typeof str !== "string") throw new Error("argument must be string");
-	return str[0].toUpperCase() + str.slice(1);
+	str = str[0].toUpperCase() + str.slice(1);
+	return str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
 }
 
 function changeSceneVariant(scene, backgroundURL) {
@@ -45,15 +46,16 @@ export async function variantPicker(li) {
 	const backgroundPath = background.slice(0, background.lastIndexOf("/"));
 	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", backgroundPath);
 	const maps = filePickerResult.files;
-	const mapVariants = new Map;
+	const variants = new Map;
 
 	for (const map of maps) {
-		mapVariants.set(capitalizeFirstLetter(map.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]), map);
+		variants.set(getVariantName(map), map);
 	}
+	variants.delete(selectVariant(background))
 
-	if (!mapVariants.size) throw new Error("No variants found");
-	
-	const variant = await selectVariant(mapVariants);
+	if (!variants.size) throw new Error("No variants found");
+
+	const variant = await selectVariant(variants);
 	if (!variant) return
-	changeSceneVariant(scene, );
+	changeSceneVariant(scene, variant);
 }
