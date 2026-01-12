@@ -89,8 +89,11 @@ export async function variantPicker(li) {
 		if (!variants.size) throw new Error("No variants found");
 
 		const variant = await selectVariant(variants);
-		if (!variant) {
+		if (!variant && variant !== undefined) {
 			ui.notifications.warn("No variants found");
+			return;
+		} else if (variant === undefined) {
+			// Prompt was closed
 			return;
 		}
 		changeSceneVariant(scene, variant);
