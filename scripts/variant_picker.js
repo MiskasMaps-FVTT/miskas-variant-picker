@@ -1,5 +1,9 @@
+function incorrectType(error, val) {
+	throw new Error(error + " (" + typeof val + " provided)");
+}
+
 function getVariantName(str) {
-	if (typeof str !== "string") throw new Error("argument must be string");
+	if (typeof str !== "string") incorrectType("argument must be a string!", str);
 	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3];
 	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
@@ -11,8 +15,8 @@ function getVariantName(str) {
 }
 
 function changeSceneVariant(scene, backgroundURL) {
-	if (!(scene instanceof Scene)) throw new Error("Provided scene is not a scene")
-	if (typeof backgroundURL !== "string") throw new Error("Background is not a string")
+	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene)
+	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL)
 
 	scene.update({
 		background: { src: backgroundURL }
@@ -35,7 +39,7 @@ function generateButtons(variants) {
 }
 
 async function selectVariant(variants) {
-	if (!(variants instanceof Map)) throw new Error("variants must be a map")
+	if (!(variants instanceof Map)) incorrectType("variants must be a map!", variants);
 
 	return await foundry.applications.api.DialogV2.wait({
 		window: { title: "Select variant" },
