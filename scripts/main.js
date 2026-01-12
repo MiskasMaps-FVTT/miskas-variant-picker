@@ -19,10 +19,19 @@ Hooks.once("init", () => {
 	game.settings.register("miskas-variant-picker", "globalEnable", {
 		name: "Enable Globally",
 		hint: "Enable the variant picker on modules other than Miska's Maps scenes",
-		scope: "client",
+		scope: "user",
 		config: true,
 		type: Boolean,
 		default: false
+	});
+
+	game.settings.register("miskas-variant-picker", "showSuccess", {
+		name: "Show Success Message",
+		hint: "Wheter to show a success message when variant is changed",
+		scope: "user",
+		config: true,
+		type: Boolean,
+		default: true
 	});
 
 	game.isForge = !!(window.ForgeVTT && ForgeVTT.usingTheForge);

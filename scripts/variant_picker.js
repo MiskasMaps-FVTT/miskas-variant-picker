@@ -21,6 +21,8 @@ function changeSceneVariant(scene, backgroundURL) {
 	scene.update({
 		background: { src: backgroundURL }
 	});
+	if (game.settings.get("miskas-variant-picker", "showSuccess"))
+		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
 }
 
 function generateButtons(variants) {
@@ -92,6 +94,7 @@ export async function variantPicker(li) {
 			return;
 		}
 		changeSceneVariant(scene, variant);
+
 	} catch (error) {
 		ui.notifications.error(error);
 	}
