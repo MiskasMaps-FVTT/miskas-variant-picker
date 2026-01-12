@@ -1,6 +1,10 @@
+function incorrectType(error, val) {
+	throw new Error(error + " (" + typeof val + " provided)");
+}
+
 function getVariantName(str) {
-	if (typeof str !== "string") throw new Error("argument must be string");
-	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	if (typeof str !== "string") incorrectType("argument must be a string!", str);
+	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3];
 	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i];
@@ -11,8 +15,8 @@ function getVariantName(str) {
 }
 
 function changeSceneVariant(scene, backgroundURL) {
-	if (!(scene instanceof Scene)) throw new Error("Provided scene is not a scene")
-	if (typeof backgroundURL !== "string") throw new Error("Background is not a string")
+	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene)
+	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL)
 
 	scene.update({
 		background: { src: backgroundURL }
@@ -35,7 +39,7 @@ function generateButtons(variants) {
 }
 
 async function selectVariant(variants) {
-	if (!(variants instanceof Map)) throw new Error("variants must be a map")
+	if (!(variants instanceof Map)) incorrectType("variants must be a map!", variants);
 
 	return await foundry.applications.api.DialogV2.wait({
 		window: { title: "Select variant" },
@@ -45,43 +49,50 @@ async function selectVariant(variants) {
 }
 
 export async function variantPicker(li) {
-	const sceneId = "Scene." + li.dataset.entryId;
-	const scene = fromUuidSync(sceneId);
-	const background = scene.background.src;
-	const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
-	let path;
-	let browseFiles;
-	if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
-		browseFiles = FilePicker.browse;
-		path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
-		pathParts = path.split("/");
-		moduleName = pathParts[1];
-		const cutName = moduleName.slice(0, moduleName.lastIndexOf("-") - 1);
-		closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
+	try {
+		const sceneId = "Scene." + li.dataset.entryId;
+		const scene = fromUuidSync(sceneId);
+		const background = scene.background.src;
+		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
+		let path;
+		let browseFiles;
+		if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
+			browseFiles = FilePicker.browse;
+			path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
+			pathParts = path.split("/");
+			moduleName = pathParts[1];
+			const cutName = moduleName.slice(0, moduleName.lastIndexOf("-") - 1);
+			closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
 
-		if (closeMatches.has(`modules/${moduleName}`)) {
-			// path already correct
-		} else if (closeMatches.has(`modules/${cutName}`)) {
-			path = pathParts.pop() + "-" + cutName + "-" + pathParts.slice(1).join("/");
+			if (closeMatches.has(`modules/${moduleName}`)) {
+				// path already correct
+			} else if (closeMatches.has(`modules/${cutName}`)) {
+				path = pathParts.pop() + "-" + cutName + "-" + pathParts.slice(1).join("/");
+			} else {
+				throw new Error(`No module ${moduleName} found`);
+			}
 		} else {
-			throw new Error(`No module ${moduleName} found`)
+			browseFiles = foundry.applications.apps.FilePicker.browse;
+			path = background.slice(0, background.lastIndexOf("/"));
 		}
-	} else {
-		browseFiles = foundry.applications.apps.FilePicker.browse;
-		path = background.slice(0, background.lastIndexOf("/"));
+		const filePickerResult = await browseFiles("data", path);
+		const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
+		const variants = new Map;
+
+		for (const map of maps) {
+			variants.set(getVariantName(map), map);
+		}
+		variants.delete(getVariantName(background));
+
+		if (!variants.size) throw new Error("No variants found");
+
+		const variant = await selectVariant(variants);
+		if (!variant) {
+			ui.notifications.warn("No variants found");
+			return;
+		}
+		changeSceneVariant(scene, variant);
+	} catch (error) {
+		ui.notifications.error(error);
 	}
-	const filePickerResult = await browseFiles("data", path);
-	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
-	const variants = new Map;
-
-	for (const map of maps) {
-		variants.set(getVariantName(map), map);
-	}
-	variants.delete(getVariantName(background))
-
-	if (!variants.size) throw new Error("No variants found");
-
-	const variant = await selectVariant(variants);
-	if (!variant) return
-	changeSceneVariant(scene, variant);
 }
