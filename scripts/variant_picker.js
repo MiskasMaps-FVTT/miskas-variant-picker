@@ -1,6 +1,6 @@
 function getVariantName(str) {
 	if (typeof str !== "string") throw new Error("argument must be string");
-	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
+	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3];
 	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i];
@@ -65,7 +65,7 @@ export async function variantPicker(li) {
 			} else if (closeMatches.has(`modules/${cutName}`)) {
 				path = pathParts.pop() + "-" + cutName + "-" + pathParts.slice(1).join("/");
 			} else {
-				throw new Error(`No module ${moduleName} found`)
+				throw new Error(`No module ${moduleName} found`);
 			}
 		} else {
 			browseFiles = foundry.applications.apps.FilePicker.browse;
@@ -78,7 +78,7 @@ export async function variantPicker(li) {
 		for (const map of maps) {
 			variants.set(getVariantName(map), map);
 		}
-		variants.delete(getVariantName(background))
+		variants.delete(getVariantName(background));
 
 		if (!variants.size) throw new Error("No variants found");
 
