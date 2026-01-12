@@ -55,6 +55,7 @@ export async function variantPicker(li) {
 	if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
 		source = "forgevtt";
 		path = background.slice(background.indexOf("modules/"));
+		browseFiles = FilePicker.browse
 	}
 	const filePickerResult = await browseFiles(source, path);
 	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
