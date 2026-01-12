@@ -49,11 +49,15 @@ export async function variantPicker(li) {
 	const scene = fromUuidSync(sceneId);
 	const background = scene.background.src;
 	const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
+	let source = "data";
 	let path = background
+	let browseFiles = foundry.applications.apps.FilePicker.browse
 	if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
+		source = "forgevtt";
 		path = background.slice(background.indexOf("modules/"));
+		browseFiles = FilePicker.browse
 	}
-	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", path);
+	const filePickerResult = await browseFiles(source, path);
 	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
 	const variants = new Map;
 
