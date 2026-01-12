@@ -1,7 +1,7 @@
 function getVariantName(str) {
 	if (typeof str !== "string") throw new Error("argument must be string");
 	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3]
-	const parts = map.split("-");
+	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i];
 		parts[i] = part[0].toUpperCase() + part.slice(1);
