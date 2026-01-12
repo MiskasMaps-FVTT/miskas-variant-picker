@@ -52,11 +52,23 @@ export async function variantPicker(li) {
 	let path;
 	let browseFiles;
 	if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
-		path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
 		browseFiles = FilePicker.browse;
+		path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
+		pathParts = path.split("/");
+		moduleName = pathParts[1];
+		const cutName = moduleName.slice(0, moduleName.lastIndexOf("-") - 1);
+		closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
+
+		if (closeMatches.has(`modules/${moduleName}`)) {
+			// path already correct
+		} else if (closeMatches.has(`modules/${cutName}`)) {
+			path = pathParts.pop() + "-" + cutName + "-" + pathParts.slice(1).join("/");
+		} else {
+			throw new Error(`No module ${moduleName} found`)
+		}
 	} else {
-		path = background.slice(0, background.lastIndexOf("/"));
 		browseFiles = foundry.applications.apps.FilePicker.browse;
+		path = background.slice(0, background.lastIndexOf("/"));
 	}
 	const filePickerResult = await browseFiles("data", path);
 	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
