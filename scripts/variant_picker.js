@@ -50,12 +50,15 @@ export async function variantPicker(li) {
 	const background = scene.background.src;
 	const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
 	let path;
+	let browseFiles;
 	if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
 		path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
+		browseFiles = FilePicker.browse;
 	} else {
 		path = background.slice(0, background.lastIndexOf("/"));
+		browseFiles = foundry.applications.apps.FilePicker.browse;
 	}
-	const filePickerResult = await foundry.applications.apps.FilePicker.browse("data", path);
+	const filePickerResult = await browseFiles("data", path);
 	const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
 	const variants = new Map;
 
