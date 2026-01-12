@@ -24,4 +24,6 @@ Hooks.once("init", () => {
 		type: Boolean,
 		default: false
 	});
+
+	game.isForge = !!(window.ForgeVTT && ForgeVTT.usingTheForge);
 });
