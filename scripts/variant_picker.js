@@ -57,7 +57,9 @@ export async function variantPicker(li) {
 		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match("(.*?)(-[0-9]+x[0-9]+)")[1];
 		const path = background.slice(0, background.lastIndexOf("/"));
 		let browseFiles;
+		// Use global namespace for forge compatibility
 		if (game.isForge) browseFiles = FilePicker.browse;
+		// Use new namespace if forge is not used
 		else browseFiles = foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browseFiles("data", path);
 		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
@@ -66,7 +68,7 @@ export async function variantPicker(li) {
 		for (const map of maps) variants.set(getVariantName(map), map);
 		variants.delete(getVariantName(background));
 
-		if (!variants.size) throw new Error("No variants found");
+		if (variants.size <= 0) throw new Error("No variants found");
 
 		const variant = await selectVariant(variants);
 
