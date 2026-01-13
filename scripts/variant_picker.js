@@ -62,7 +62,7 @@ export async function variantPicker(li) {
 			path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
 			const pathParts = path.split("/");
 			const moduleName = pathParts[1];
-			const cutName = moduleName.slice(0, moduleName.lastIndexOf("-") - 1);
+			const cutName = moduleName.slice(0, moduleName.lastIndexOf("-"));
 			const closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
 
 			if (closeMatches.has(`modules/${moduleName}`)) {
