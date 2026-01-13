@@ -57,31 +57,22 @@ export async function variantPicker(li) {
 		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match("(.*?)(-[0-9]+x[0-9]+)")[1];
 		const path = background.slice(0, background.lastIndexOf("/"));
 		let browseFiles;
-		if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
-			// Use global namespace for forge compatibility
-			browseFiles = FilePicker.browse;
-		} else {
-			browseFiles = foundry.applications.apps.FilePicker.browse;
-		}
+		if (game.isForge) browseFiles = FilePicker.browse;
+		else browseFiles = foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browseFiles("data", path);
 		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
 		const variants = new Map();
 
-		for (const map of maps) {
-			variants.set(getVariantName(map), map);
-		}
+		for (const map of maps) variants.set(getVariantName(map), map);
 		variants.delete(getVariantName(background));
 
 		if (!variants.size) throw new Error("No variants found");
 
 		const variant = await selectVariant(variants);
-		if (!variant && variant !== undefined) {
-			ui.notifications.warn("No variants found");
-			return;
-		} else if (variant === undefined) {
-			// Prompt was closed
-			return;
-		}
+
+		if (!variant && variant !== null) ui.notifications.error("No variants found");
+		if (variant === null) return;
+
 		changeSceneVariant(scene, variant);
 	} catch (error) {
 		ui.notifications.error(error);
