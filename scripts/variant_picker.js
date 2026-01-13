@@ -4,7 +4,7 @@ function incorrectType(error, val) {
 
 function getVariantName(str) {
 	if (typeof str !== "string") incorrectType("argument must be a string!", str);
-	const map = str.match("([0-9]+x[0-9]+[-\.]([0-9]+ppi-)?)(.*)(\.(webp)|(jpg)|(png)$)")[3];
+	const map = str.match("([0-9]+x[0-9]+[-.]([0-9]+ppi-)?)(.*)(.(webp)|(jpg)|(png)$)")[3];
 	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i];
@@ -15,18 +15,18 @@ function getVariantName(str) {
 }
 
 function changeSceneVariant(scene, backgroundURL) {
-	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene)
-	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL)
+	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene);
+	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL);
 
 	scene.update({
-		background: { src: backgroundURL }
+		background: { src: backgroundURL },
 	});
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
 		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
 }
 
 function generateButtons(variants) {
-	const buttons = new Array;
+	const buttons = [];
 
 	variants.forEach((value, key) => {
 		buttons.push({
@@ -34,7 +34,7 @@ function generateButtons(variants) {
 			action: key,
 			callback: () => {
 				return value;
-			}
+			},
 		});
 	});
 	return buttons;
@@ -45,9 +45,8 @@ async function selectVariant(variants) {
 
 	return await foundry.applications.api.DialogV2.wait({
 		window: { title: "Select variant" },
-		buttons: generateButtons(variants)
+		buttons: generateButtons(variants),
 	});
-
 }
 
 export async function variantPicker(li) {
@@ -55,7 +54,7 @@ export async function variantPicker(li) {
 		const sceneId = "Scene." + li.dataset.entryId;
 		const scene = fromUuidSync(sceneId);
 		const background = scene.background.src;
-		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match('(.*?)(-[0-9]+x[0-9]+)')[1];
+		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match("(.*?)(-[0-9]+x[0-9]+)")[1];
 		let path;
 		let browseFiles;
 		if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
@@ -79,7 +78,7 @@ export async function variantPicker(li) {
 		}
 		const filePickerResult = await browseFiles("data", path);
 		const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
-		const variants = new Map;
+		const variants = new Map();
 
 		for (const map of maps) {
 			variants.set(getVariantName(map), map);
@@ -97,7 +96,6 @@ export async function variantPicker(li) {
 			return;
 		}
 		changeSceneVariant(scene, variant);
-
 	} catch (error) {
 		ui.notifications.error(error);
 	}

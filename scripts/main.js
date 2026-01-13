@@ -6,10 +6,10 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (li) => {
 			if (!game.user.isGM) return false;
-			if (game.settings.get("miskas-variant-picker", "globalEnable")) return true
+			if (game.settings.get("miskas-variant-picker", "globalEnable")) return true;
 			const src = fromUuidSync(`Scene.${li.dataset.entryId}`).background.src;
-			if (src.search("/miskasmaps-") >= 0) return true
-			return false
+			if (src.search("/miskasmaps-") >= 0) return true;
+			return false;
 		},
 		name: "Change Scene Variant",
 	});
@@ -22,7 +22,7 @@ Hooks.once("init", () => {
 		scope: "user",
 		config: true,
 		type: Boolean,
-		default: false
+		default: false,
 	});
 
 	game.settings.register("miskas-variant-picker", "showSuccess", {
@@ -31,8 +31,8 @@ Hooks.once("init", () => {
 		scope: "user",
 		config: true,
 		type: Boolean,
-		default: true
+		default: true,
 	});
 
-	game.isForge = !!(window.ForgeVTT && ForgeVTT.usingTheForge);
+	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
 });
