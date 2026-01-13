@@ -60,10 +60,10 @@ export async function variantPicker(li) {
 		if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
 			browseFiles = FilePicker.browse;
 			path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
-			pathParts = path.split("/");
-			moduleName = pathParts[1];
+			const pathParts = path.split("/");
+			const moduleName = pathParts[1];
 			const cutName = moduleName.slice(0, moduleName.lastIndexOf("-") - 1);
-			closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
+			const closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
 
 			if (closeMatches.has(`modules/${moduleName}`)) {
 				// path already correct
