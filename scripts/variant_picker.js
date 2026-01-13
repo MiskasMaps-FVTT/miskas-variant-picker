@@ -55,46 +55,26 @@ export async function variantPicker(li) {
 		const scene = fromUuidSync(sceneId);
 		const background = scene.background.src;
 		const variantPrefix = background.slice(background.lastIndexOf("/") + 1).match("(.*?)(-[0-9]+x[0-9]+)")[1];
-		let path;
+		const path = background.slice(0, background.lastIndexOf("/"));
 		let browseFiles;
-		if (game.isForge && background.startsWith("https://assets.forge-vtt.com/")) {
-			browseFiles = FilePicker.browse;
-			path = background.slice(background.indexOf("modules/"), background.lastIndexOf("/"));
-			const pathParts = path.split("/");
-			const moduleName = pathParts[1];
-			const cutName = moduleName.slice(0, moduleName.lastIndexOf("-"));
-			const closeMatches = new Set((await browseFiles("data", `modules/${cutName}*`, { wildcard: true })).dirs);
-
-			if (closeMatches.has(`modules/${moduleName}`)) {
-				// path already correct
-			} else if (closeMatches.has(`modules/${cutName}`)) {
-				path = pathParts.pop() + "-" + cutName + "-" + pathParts.slice(1).join("/");
-			} else {
-				throw new Error(`No module ${moduleName} found`);
-			}
-		} else {
-			browseFiles = foundry.applications.apps.FilePicker.browse;
-			path = background.slice(0, background.lastIndexOf("/"));
-		}
+		// Use global namespace for forge compatibility
+		if (game.isForge) browseFiles = FilePicker.browse;
+		// Use new namespace if forge is not used
+		else browseFiles = foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browseFiles("data", path);
-		const maps = filePickerResult.files.filter((word) => word.search(variantPrefix) > 0);
+		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
 		const variants = new Map();
 
-		for (const map of maps) {
-			variants.set(getVariantName(map), map);
-		}
+		for (const map of maps) variants.set(getVariantName(map), map);
 		variants.delete(getVariantName(background));
 
-		if (!variants.size) throw new Error("No variants found");
+		if (variants.size <= 0) throw new Error("No variants found");
 
 		const variant = await selectVariant(variants);
-		if (!variant && variant !== undefined) {
-			ui.notifications.warn("No variants found");
-			return;
-		} else if (variant === undefined) {
-			// Prompt was closed
-			return;
-		}
+
+		if (!variant && variant !== null) ui.notifications.error("No variants found");
+		if (variant === null) return;
+
 		changeSceneVariant(scene, variant);
 	} catch (error) {
 		ui.notifications.error(error);
