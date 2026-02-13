@@ -4,7 +4,7 @@ function incorrectType(error, val) {
 
 function getVariantName(str) {
 	if (typeof str !== "string") incorrectType("argument must be a string!", str);
-	const map = str.match("([0-9]+x[0-9]+[-.]([0-9]+ppi-)?)(.*)(.(webp)|(jpg)|(png)$)")[3];
+	const map = str.match("([0-9]+x[0-9]+[-._]([0-9]+ppi-)?)(.*)(.(webp)|(jpg)|(png)$)")[3];
 	const parts = map.split("_");
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i];
