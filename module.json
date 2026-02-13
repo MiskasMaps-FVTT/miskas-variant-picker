@@ -2,7 +2,7 @@
 	"id": "miskas-variant-picker",
 	"title": "Miska's Maps Variant Picker",
 	"description": "<p>Change variants of maps easily through the scene context menu</p>",
-	"version": "1.4.0",
+	"version": "1.3.5",
 	"compatibility": {
 		"minimum": "13",
 		"verified": "13"
@@ -25,5 +25,5 @@
 	],
 	"url": "https://www.miskasmaps.com",
 	"manifest": "https://github.com/MiskasMaps-FVTT/miskas-variant-picker/releases/latest/download/module.json",
-	"download": "https://github.com/MiskasMaps-FVTT/miskas-variant-picker/archive/1.4.0.zip"
+	"download": "https://github.com/MiskasMaps-FVTT/miskas-variant-picker/archive/1.3.5.zip"
 }
