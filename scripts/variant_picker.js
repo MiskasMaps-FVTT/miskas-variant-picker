@@ -14,12 +14,13 @@ function getVariantName(str) {
 	return parts.join(" ");
 }
 
-function changeSceneVariant(scene, backgroundURL) {
+async function changeSceneVariant(scene, backgroundURL) {
 	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene);
 	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL);
 
 	scene.update({
 		background: { src: backgroundURL },
+		thumb: ( await scene.createThumbnail({img: backgroundURL, width: 300, height: 100}) ).thumb
 	});
 
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
@@ -77,7 +78,6 @@ export async function variantPicker(li) {
 		if (variant === null) return;
 
 		changeSceneVariant(scene, variant);
-		scene.update(await scene.createThumbnail());
 	} catch (error) {
 		ui.notifications.error(error);
 	}
