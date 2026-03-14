@@ -27,7 +27,7 @@ Hooks.once("init", () => {
 
 	game.settings.register("miskas-variant-picker", "showSuccess", {
 		name: "Show Success Message",
-		hint: "Wheter to show a success message when variant is changed",
+		hint: "Whether to show a success message when variant is changed",
 		scope: "user",
 		config: true,
 		type: Boolean,
