@@ -5,4 +5,4 @@ Designed for the map naming syntax of Miska's Maps and locked to those modules b
 ## How to use
 Enable the variant building setting from the module settings.
 
-[example](./assets/example.png)
+<img width="318" height="366" alt="example" src="https://github.com/MiskasMaps-FVTT/miskas-variant-picker/blob/feature/custom-variants/assets/example.png?raw=true"/>
