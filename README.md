@@ -5,7 +5,7 @@ Designed for the map naming syntax of Miska's Maps and locked to those modules b
 ## How to use
 Enable the variant building setting from the module settings.
 
-<img width="318" height="366" alt="example" src="https://github.com/MiskasMaps-FVTT/miskas-variant-picker/blob/feature/custom-variants/assets/example.png?raw=true"/>
+<img width="321" height="366" alt="image" src="https://github.com/user-attachments/assets/d4c8a50e-5d1c-4d31-8372-7d9ddf6a3162" />
 
 Do not use Scene RegEx and Prefix together. Scene RegEx is used to dynamically define the prefix.
 
