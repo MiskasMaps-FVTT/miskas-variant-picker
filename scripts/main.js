@@ -1,3 +1,4 @@
+import { setVariantOption } from "./variant_building.js";
 import { variantPicker } from "./variant_picker.js";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
@@ -6,12 +7,23 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (li) => {
 			if (!game.user.isGM) return false;
+			const scene = game.scenes.get(li.dataset.entryId);
+			const src = scene?.background?.src;
+			if (src?.search(scene.flags["miskas-variant-picker"]?.prefix || "/miskasmaps-") >= 0) return true;
 			if (game.settings.get("miskas-variant-picker", "globalEnable")) return true;
-			const src = fromUuidSync(`Scene.${li.dataset.entryId}`).background.src;
-			if (src.search("/miskasmaps-") >= 0) return true;
 			return false;
 		},
 		name: "Change Scene Variant",
+	});
+	menuItems.push({
+		callback: setVariantOption,
+		icon: `<i class="fa-solid fa-gears"></i>`,
+		condition: (li) => {
+			if (!game.user.isGM) return false;
+			if (game.settings.get("miskas-variant-picker", "buildingMode")) return true;
+			return false;
+		},
+		name: "Modify Scene Variant",
 	});
 });
 
@@ -32,6 +44,15 @@ Hooks.once("init", () => {
 		config: true,
 		type: Boolean,
 		default: true,
+	});
+
+	game.settings.register("miskas-variant-picker", "buildingMode", {
+		name: "Variant Building Mode",
+		hint: "Enables extra actions in the context menu to help with building variants",
+		scope: "user",
+		config: true,
+		type: Boolean,
+		default: false,
 	});
 
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
