@@ -77,14 +77,12 @@ export async function variantPicker(li) {
 		const scene = fromUuidSync(sceneId);
 		const background = scene.background.src;
 		const flags = scene.flags["miskas-variant-picker"];
-		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
-		const variantPrefix = flags?.prefix ?? background.slice(background.lastIndexOf("/") + 1).match(regex)[0];
-		const path = background.slice(0, background.lastIndexOf("/"));
-		let browseFiles;
-		// Use global namespace for forge compatibility
-		if (game.isForge) browseFiles = FilePicker.browse;
-		// Use new namespace if forge is not used
-		else browseFiles = foundry.applications.apps.FilePicker.browse;
+		const regex = flags?.regex?.scene ?? /^.*-([0-9]+x[0-9]+)?/;
+		const lastIndex = background.lastIndexOf("/");
+		const variantPrefix = flags?.prefix ?? background.slice(lastIndex.match(regex)[0]);
+		const path = background.slice(0, lastIndex);
+		// Use global namespace for forge compatibility or new namespace if forge is not used
+		const browseFiles = game.isForge ? FilePicker.browse : foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browseFiles("data", path);
 		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
 		const variants = new Map();
