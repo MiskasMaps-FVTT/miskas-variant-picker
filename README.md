@@ -21,3 +21,7 @@ Variant RegEx: used to get the name of the variant for display. It **must** incl
 Prefix: A string to use to search for matching variants. If a file contains this string, it is included in the potential matches for variants, which are further filtered to only those that contain a variant name.
 
 Contains: An extra filter that selects only scenes containing this string.
+
+
+## Install
+You can install the module by using the following manifest url: https://github.com/MiskasMaps-FVTT/miskas-variant-picker/releases/latest/download/module.json
