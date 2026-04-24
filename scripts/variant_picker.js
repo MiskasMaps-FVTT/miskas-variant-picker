@@ -77,9 +77,9 @@ export async function variantPicker(li) {
 		const scene = fromUuidSync(sceneId);
 		const background = scene.background.src;
 		const flags = scene.flags["miskas-variant-picker"];
-		const regex = flags?.regex?.scene ?? /^.*-([0-9]+x[0-9]+)?/;
-		const lastIndex = background.lastIndexOf("/");
-		const variantPrefix = flags?.prefix ?? background.slice(lastIndex.match(regex)[0]);
+		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
+		const lastIndex = background.lastIndexOf("/") + 1
+		const variantPrefix = flags?.prefix ?? background.slice(lastIndex).match(regex)[0];
 		const path = background.slice(0, lastIndex);
 		// Use global namespace for forge compatibility or new namespace if forge is not used
 		const browseFiles = game.isForge ? FilePicker.browse : foundry.applications.apps.FilePicker.browse;
