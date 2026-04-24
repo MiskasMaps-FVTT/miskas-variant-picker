@@ -91,9 +91,6 @@ export async function variantPicker(li) {
 
 		variants.delete(background);
 
-		console.log(variants)
-		console.log(variants.size)
-
 		if (variants.size <= 0) throw new Error("No variants found");
 
 		if (flags?.filter) filterVariants(variants, scene.flags["miskas-variant-picker"].filter);
