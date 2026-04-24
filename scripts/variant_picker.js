@@ -59,7 +59,7 @@ async function selectVariant(variants) {
 function filterVariants(variants, filter) {
 	variants.entries().forEach((variant) => {
 		if (!variant[1].includes(filter.contains)) variants.delete(variant[0]);
-		else if (!filter.no_remove) {
+		else if (filter.remove) {
 			variants.set(
 				variant[0],
 				variant[1]
