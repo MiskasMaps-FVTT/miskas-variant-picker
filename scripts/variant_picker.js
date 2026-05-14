@@ -22,15 +22,22 @@ async function changeSceneVariant(scene, backgroundURL) {
 	const { thumb } = await scene.createThumbnail({ img: backgroundURL });
 	const level_idx = scene.firstLevel._id;
 
-	scene.updateEmbeddedDocuments("Level", [
-		{
-			_id: level_idx,
+	if (game.release.generation >= 14) {
+		scene.updateEmbeddedDocuments("Level", [
+			{
+				_id: level_idx,
+				background: { src: backgroundURL },
+			},
+		]);
+		scene.update({
+			thumb: thumb,
+		});
+	} else {
+		scene.update({
 			background: { src: backgroundURL },
-		},
-	]);
-	scene.update({
-		thumb: thumb,
-	});
+			thumb: thumb,
+		});
+	}
 
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
 		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
@@ -61,7 +68,7 @@ async function selectVariant(variants) {
 }
 
 function filterVariants(variants, filter) {
-	if (Object.keus(filter).length === 0) return false
+	if (Object.keus(filter).length === 0) return false;
 	variants.entries().forEach((variant) => {
 		if (!variant[1].includes(filter?.contains || "")) variants.delete(variant[0]);
 		else if (filter.remove) {
@@ -80,7 +87,7 @@ export async function variantPicker(li) {
 	try {
 		const sceneId = "Scene." + li.dataset.entryId;
 		const scene = fromUuidSync(sceneId);
-		const background = scene.firstLevel.background.src;
+		const background = game.release.generation >= 14 ? scene.firstLevel.background.src : scene.background.src;
 		const flags = scene.flags["miskas-variant-picker"];
 		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
 		const lastIndex = background.lastIndexOf("/") + 1;
