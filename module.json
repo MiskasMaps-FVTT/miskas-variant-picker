@@ -4,8 +4,8 @@
 	"description": "<p>Change variants of maps easily through the scene context menu</p>",
 	"version": "1.5.2",
 	"compatibility": {
-		"minimum": "13",
-		"verified": "13"
+		"minimum": "14",
+		"verified": "14"
 	},
 	"authors": [
 		{
