@@ -1,6 +1,5 @@
 import { setVariantOption } from "./variant_building.ts";
 import { variantPicker } from "./variant_picker.ts";
-import VariantOpts from "./variant_opts.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
@@ -62,8 +61,6 @@ Hooks.once("init", () => {
 		type: Boolean,
 		default: false,
 	});
-
-	(CONFIG as any).VariantOpts = VariantOpts;
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
