@@ -20,13 +20,17 @@ async function changeSceneVariant(scene, backgroundURL) {
 	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL);
 
 	const { thumb } = await scene.createThumbnail({ img: backgroundURL });
-	scene.update(
+	const level_idx = scene.firstLevel._id;
+
+	scene.updateEmbeddedDocuments("Level", [
 		{
+			_id: level_idx,
 			background: { src: backgroundURL },
-			thumb: thumb,
 		},
-		{ diff: false },
-	);
+	]);
+	scene.update({
+		thumb: thumb,
+	});
 
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
 		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
@@ -75,10 +79,10 @@ export async function variantPicker(li) {
 	try {
 		const sceneId = "Scene." + li.dataset.entryId;
 		const scene = fromUuidSync(sceneId);
-		const background = scene.background.src;
+		const background = scene.firstLevel.background.src;
 		const flags = scene.flags["miskas-variant-picker"];
 		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
-		const lastIndex = background.lastIndexOf("/") + 1
+		const lastIndex = background.lastIndexOf("/") + 1;
 		const variantPrefix = flags?.prefix ?? background.slice(lastIndex).match(regex)[0];
 		const path = background.slice(0, lastIndex);
 		// Use global namespace for forge compatibility or new namespace if forge is not used
