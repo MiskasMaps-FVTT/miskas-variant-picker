@@ -61,8 +61,9 @@ async function selectVariant(variants) {
 }
 
 function filterVariants(variants, filter) {
+	if (Object.keus(filter).length === 0) return false
 	variants.entries().forEach((variant) => {
-		if (!variant[1].includes(filter.contains)) variants.delete(variant[0]);
+		if (!variant[1].includes(filter?.contains || "")) variants.delete(variant[0]);
 		else if (filter.remove) {
 			variants.set(
 				variant[0],
@@ -91,7 +92,10 @@ export async function variantPicker(li) {
 		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
 		const variants = new Map();
 
-		for (const map of maps) variants.set(map, getVariantName(map, flags?.regex?.variant));
+		for (const map of maps) {
+			variants.set(map, getVariantName(map, flags?.regex?.variant));
+			console.log(variants.get(map));
+		}
 
 		variants.delete(background);
 
