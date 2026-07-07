@@ -72,7 +72,7 @@ async function selectVariant(variants) {
 }
 
 function filterVariants(variants, filter) {
-	if (Object.keus(filter).length === 0) return false;
+	if (Object.keys(filter).length === 0) return false;
 	variants.entries().forEach((variant) => {
 		if (!variant[1].includes(filter?.contains || "")) variants.delete(variant[0]);
 		else if (filter.remove) {
