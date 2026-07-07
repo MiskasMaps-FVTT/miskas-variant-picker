@@ -1,0 +1,31 @@
+{
+	"compilerOptions": {
+		"types": [
+			"@league-of-foundry-developers/foundry-vtt-types"
+		],
+		"target": "esnext",
+		"useDefineForClassFields": true,
+		"module": "esnext",
+		"lib": [
+			"esnext",
+			"dom"
+		],
+		"moduleResolution": "bundler",
+		"allowJs": true,
+		"strict": true,
+		"sourceMap": true,
+		"resolveJsonModule": true,
+		"isolatedModules": false,
+		"esModuleInterop": true,
+		"noEmit": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noImplicitAny": true,
+		"skipLibCheck": true
+	},
+	"include": [
+		"src"
+	]
+}
