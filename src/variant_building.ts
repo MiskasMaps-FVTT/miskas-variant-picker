@@ -1,4 +1,4 @@
-function isValidRegex(pattern) {
+function isValidRegex(pattern: RegExp | string): boolean {
 	try {
 		new RegExp(pattern);
 		return true;
@@ -7,15 +7,15 @@ function isValidRegex(pattern) {
 	}
 }
 
-function hasCaptureGroup(regex) {
+function hasCaptureGroup(regex: RegExp | string) {
 	const captureGroupPattern = /(?:^|[^\\])\((?!\?[:=!<])/;
-
 	return captureGroupPattern.test(new RegExp(regex).source);
 }
 
-function openDialog(scene) {
+function openDialog(scene: Scene) {
+	// @ts-expect-error Type error due to overtly strict types
 	const flags = scene.flags["miskas-variant-picker"];
-	const dialog = new foundry.applications.api.DialogV2({
+	new foundry.applications.api.DialogV2({
 		form: { closeOnSubmit: false },
 		window: { title: "Enter variant options" },
 		content: `
@@ -30,7 +30,7 @@ function openDialog(scene) {
 			{
 				action: "ok",
 				label: "Confirm",
-				callback: (event, button, dialog) => {
+				callback: (_, button: any, dialog): void | false => {
 					const elements = button.form.elements;
 					const sceneRegex = elements.name_regex.value;
 					const variantRegex = elements.variant_regex.value;
@@ -50,16 +50,24 @@ function openDialog(scene) {
 						return false;
 					}
 
+					// @ts-expect-error Type error due to overtly strict types
 					if (variantRegex) scene.setFlag("miskas-variant-picker", "regex.variant", variantRegex);
+					// @ts-expect-error Type error due to overtly strict types
 					else scene.unsetFlag("miskas-variant-picker", "regex.variant");
 
+					// @ts-expect-error Type error due to overtly strict types
 					if (sceneRegex) scene.setFlag("miskas-variant-picker", "regex.scene", sceneRegex);
+					// @ts-expect-error Type error due to overtly strict types
 					else scene.unsetFlag("miskas-variant-picker", "regex.scene");
 
+					// @ts-expect-error Type error due to overtly strict types
 					if (prefix) scene.setFlag("miskas-variant-picker", "prefix", prefix);
+					// @ts-expect-error Type error due to overtly strict types
 					else scene.unsetFlag("miskas-variant-picker", "prefix");
 
+					// @ts-expect-error Type error due to overtly strict types
 					if (contains) scene.setFlag("miskas-variant-picker", "filter.contains", contains);
+					// @ts-expect-error Type error due to overtly strict types
 					else scene.unsetFlag("miskas-variant-picker", "filter.contains");
 
 					dialog.close();
@@ -69,8 +77,8 @@ function openDialog(scene) {
 	}).render({ force: true });
 }
 
-export function setVariantOption(li) {
+export function setVariantOption(li: HTMLElement) {
 	const sceneId = "Scene." + li.dataset.entryId;
-	const scene = fromUuidSync(sceneId);
+	const scene = fromUuidSync(sceneId) as Scene;
 	openDialog(scene);
 }
