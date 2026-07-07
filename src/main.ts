@@ -1,5 +1,6 @@
-import { setVariantOption } from "./variant_building.js";
-import { variantPicker } from "./variant_picker.js";
+import { setVariantOption } from "./variant_building.ts";
+import { variantPicker } from "./variant_picker.ts";
+import VariantOpts from "./variant_opts.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
@@ -7,9 +8,12 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (li) => {
 			if (!game.user.isGM) return false;
-			const scene = game.scenes.get(li.dataset.entryId);
+			const scene = game.scenes?.get(li.dataset.entryId ?? "");
+			if (scene === undefined) return false
 			const src = scene?.background?.src;
-			if (src?.search(scene.flags["miskas-variant-picker"]?.prefix || "/miskasmaps-") >= 0) return true;
+			// @ts-expect-error Type error due to overtly strict types
+			if (src?.search(scene.flags["miskas-variant-picker"]?.prefix ?? "/miskasmaps-") >= 0) return true;
+			// @ts-expect-error Type error due to overtly strict types
 			if (game.settings.get("miskas-variant-picker", "globalEnable")) return true;
 			return false;
 		},
@@ -18,8 +22,9 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
 		callback: setVariantOption,
 		icon: `<i class="fa-solid fa-gears"></i>`,
-		condition: (li) => {
+		condition: () => {
 			if (!game.user.isGM) return false;
+			// @ts-expect-error Type error due to overtly strict types
 			if (game.settings.get("miskas-variant-picker", "buildingMode")) return true;
 			return false;
 		},
@@ -28,6 +33,7 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 });
 
 Hooks.once("init", () => {
+	// @ts-expect-error Type error due to overtly strict types
 	game.settings.register("miskas-variant-picker", "globalEnable", {
 		name: "Enable Globally",
 		hint: "Enable the variant picker on modules other than Miska's Maps scenes",
@@ -37,6 +43,7 @@ Hooks.once("init", () => {
 		default: false,
 	});
 
+	// @ts-expect-error Type error due to overtly strict types
 	game.settings.register("miskas-variant-picker", "showSuccess", {
 		name: "Show Success Message",
 		hint: "Whether to show a success message when variant is changed",
@@ -46,6 +53,7 @@ Hooks.once("init", () => {
 		default: true,
 	});
 
+	// @ts-expect-error Type error due to overtly strict types
 	game.settings.register("miskas-variant-picker", "buildingMode", {
 		name: "Variant Building Mode",
 		hint: "Enables extra actions in the context menu to help with building variants",
@@ -55,5 +63,8 @@ Hooks.once("init", () => {
 		default: false,
 	});
 
+	(CONFIG as any).VariantOpts = VariantOpts;
+
+	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
 });

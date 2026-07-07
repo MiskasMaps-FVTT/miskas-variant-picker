@@ -1,12 +1,10 @@
-function incorrectType(error, val) {
+import { Filter, Variants } from "./types.ts";
+
+function incorrectType(error: string, val: any) {
 	throw new Error(error + " (" + typeof val + " provided)");
 }
 
-function addVariant(variant_opts) {
-
-}
-
-function getVariantName(str, regex) {
+function getVariantName(str: string, regex: RegExp) {
 	if (typeof str !== "string") incorrectType("argument must be a string!", str);
 	regex = regex || /[0-9]+x[0-9]+[-._](?:[0-9]+ppi-)?(.+)\.(?:webp|jpg|png)$/;
 	const map = str.slice(str.lastIndexOf("/")).match(regex)[1];
@@ -19,14 +17,16 @@ function getVariantName(str, regex) {
 	return parts.join(" ");
 }
 
-async function changeSceneVariant(scene, backgroundURL) {
+async function changeSceneVariant(scene: Scene, backgroundURL: string) {
 	if (!(scene instanceof Scene)) incorrectType("Provided scene is not a scene!", scene);
 	if (typeof backgroundURL !== "string") incorrectType("Background is not a string", backgroundURL);
 
 	const { thumb } = await scene.createThumbnail({ img: backgroundURL });
-	const level_idx = scene.firstLevel._id;
-
 	if (game.release.generation >= 14) {
+		// @ts-expect-error V14
+		const level_idx = scene.firstLevel._id;
+
+		// @ts-expect-error V14
 		scene.updateEmbeddedDocuments("Level", [
 			{
 				_id: level_idx,
@@ -43,14 +43,15 @@ async function changeSceneVariant(scene, backgroundURL) {
 		});
 	}
 
+	// @ts-expect-error Type error due to overtly strict types
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
 		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
 }
 
-function generateButtons(variants) {
-	const buttons = [];
+function generateButtons(variants: Variants) {
+	const buttons: foundry.applications.api.DialogV2.Button<foundry.applications.api.DialogV2.Any>[] = [];
 
-	variants.forEach((value, key) => {
+	variants.forEach((value: any, key: string) => {
 		buttons.push({
 			label: value,
 			action: value,
@@ -62,7 +63,7 @@ function generateButtons(variants) {
 	return buttons;
 }
 
-async function selectVariant(variants) {
+async function selectVariant(variants: Variants): Promise<any> {
 	if (!(variants instanceof Map)) incorrectType("variants must be a map!", variants);
 
 	return await foundry.applications.api.DialogV2.wait({
@@ -71,7 +72,7 @@ async function selectVariant(variants) {
 	});
 }
 
-function filterVariants(variants, filter) {
+function filterVariants(variants: Variants, filter: Filter): void | false {
 	if (Object.keys(filter).length === 0) return false;
 	variants.entries().forEach((variant) => {
 		if (!variant[1].includes(filter?.contains || "")) variants.delete(variant[0]);
@@ -80,24 +81,26 @@ function filterVariants(variants, filter) {
 				variant[0],
 				variant[1]
 					.split(" ")
-					.filter((x) => x != filter.contains)
+					.filter((x: string) => x != filter.contains)
 					.join(" "),
 			);
 		}
 	});
 }
 
-export async function variantPicker(li) {
+export async function variantPicker(li: HTMLElement) {
 	try {
 		const sceneId = "Scene." + li.dataset.entryId;
-		const scene = fromUuidSync(sceneId);
+		const scene = fromUuidSync(sceneId) as Scene;
+		// @ts-expect-error V14
 		const background = game.release.generation >= 14 ? scene.firstLevel.background.src : scene.background.src;
+		// @ts-expect-error Type error due to overtly strict types
 		const flags = scene.flags["miskas-variant-picker"];
 		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
 		const lastIndex = background.lastIndexOf("/") + 1;
 		const variantPrefix = flags?.prefix ?? background.slice(lastIndex).match(regex)[0];
 		const path = background.slice(0, lastIndex);
-		// Use global namespace for forge compatibility or new namespace if forge is not used
+		// @ts-expect-error Use global namespace for forge compatibility or new namespace if forge is not used
 		const browseFiles = game.isForge ? FilePicker.browse : foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browseFiles("data", path);
 		const maps = filePickerResult.files.filter((map) => map.search(variantPrefix) > 0);
@@ -112,6 +115,7 @@ export async function variantPicker(li) {
 
 		if (variants.size <= 0) throw new Error("No variants found");
 
+		// @ts-expect-error Type error due to overtly strict types
 		if (flags?.filter) filterVariants(variants, scene.flags["miskas-variant-picker"].filter);
 
 		const variant = await selectVariant(variants);
