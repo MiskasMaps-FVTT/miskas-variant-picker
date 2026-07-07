@@ -12,6 +12,5 @@ export default defineConfig({
 			formats: ["es"],
 			fileName: "scripts/main",
 		},
-
 	},
 });
