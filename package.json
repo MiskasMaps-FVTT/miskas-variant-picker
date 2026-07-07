@@ -1,0 +1,16 @@
+{
+	"name": "miskas-variant-picker",
+	"version": "1.5.2",
+	"description": "Change variants of maps easily through the scene context menu",
+	"license": "BSD-3",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc && vite build"
+	},
+	"devDependencies": {
+		"@league-of-foundry-developers/foundry-vtt-types": "^13.346.0-beta.20250812191140",
+		"typescript": "^6.0.3",
+		"vite": "^8.1.3"
+	}
+}
