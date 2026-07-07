@@ -2,6 +2,10 @@ function incorrectType(error, val) {
 	throw new Error(error + " (" + typeof val + " provided)");
 }
 
+function addVariant(variant_opts) {
+
+}
+
 function getVariantName(str, regex) {
 	if (typeof str !== "string") incorrectType("argument must be a string!", str);
 	regex = regex || /[0-9]+x[0-9]+[-._](?:[0-9]+ppi-)?(.+)\.(?:webp|jpg|png)$/;
