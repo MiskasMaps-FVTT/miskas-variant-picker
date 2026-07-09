@@ -13,14 +13,13 @@ function hasCaptureGroup(regex: RegExp | string) {
 }
 
 function openDialog(scene: Scene) {
-	// @ts-expect-error Type error due to overtly strict types
 	const flags = scene.flags["miskas-variant-picker"];
 	new foundry.applications.api.DialogV2({
 		form: { closeOnSubmit: false },
 		window: { title: "Enter variant options" },
 		content: `
 		<form>
-			<label>Scene RegEx<input name="name_regex" type="text" value="${flags?.regex?.name ?? ""}"></label>
+			<label>Scene RegEx<input name="name_regex" type="text" value="${flags?.regex?.scene ?? ""}"></label>
 			<label>Variant RegEx<input name="variant_regex" type="text" value="${flags?.regex?.variant ?? ""}"></label>
 			<label>Prefix<input name="prefix" type="text" value="${flags?.prefix ?? ""}"></label>
 			<label>Contains<input name="contains" type="text" value="${flags?.filter?.contains ?? ""}"></label>
@@ -50,25 +49,17 @@ function openDialog(scene: Scene) {
 						return false;
 					}
 
-					// @ts-expect-error Type error due to overtly strict types
-					if (variantRegex) scene.setFlag("miskas-variant-picker", "regex.variant", variantRegex);
-					// @ts-expect-error Type error due to overtly strict types
-					else scene.unsetFlag("miskas-variant-picker", "regex.variant");
+					if (variantRegex) scene.setFlag("miskas-variant-picker", "regex", { variant: variantRegex });
+					else scene.setFlag("miskas-variant-picker", "regex", { variant: undefined });
 
-					// @ts-expect-error Type error due to overtly strict types
-					if (sceneRegex) scene.setFlag("miskas-variant-picker", "regex.scene", sceneRegex);
-					// @ts-expect-error Type error due to overtly strict types
-					else scene.unsetFlag("miskas-variant-picker", "regex.scene");
+					if (sceneRegex) scene.setFlag("miskas-variant-picker", "regex", { scene: sceneRegex });
+					else scene.setFlag("miskas-variant-picker", "regex", { scene: undefined });
 
-					// @ts-expect-error Type error due to overtly strict types
 					if (prefix) scene.setFlag("miskas-variant-picker", "prefix", prefix);
-					// @ts-expect-error Type error due to overtly strict types
 					else scene.unsetFlag("miskas-variant-picker", "prefix");
 
-					// @ts-expect-error Type error due to overtly strict types
-					if (contains) scene.setFlag("miskas-variant-picker", "filter.contains", contains);
-					// @ts-expect-error Type error due to overtly strict types
-					else scene.unsetFlag("miskas-variant-picker", "filter.contains");
+					if (contains) scene.setFlag("miskas-variant-picker", "filter", { contains: contains });
+					else scene.setFlag("miskas-variant-picker", "filter", { contains: undefined });
 
 					dialog.close();
 				},

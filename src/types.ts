@@ -1,3 +1,3 @@
 export type Variants = Map<string, any>
-export type Filter = { remove?: boolean, contains?: string }
-export type VariantData = { name: string, scene: Scene, background?: string, foreground?: string }
+export type VariantFilter = { remove?: boolean, contains?: string }
+export type VariantRegEx = {scene?: RegExp, variant?: RegExp}

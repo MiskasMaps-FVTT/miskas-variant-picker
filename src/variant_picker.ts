@@ -1,4 +1,4 @@
-import { Filter, Variants } from "./types.ts";
+import { VariantFilter, Variants } from "./types.ts";
 
 function incorrectType(error: string, val: any) {
 	throw new Error(error + " (" + typeof val + " provided)");
@@ -43,7 +43,6 @@ async function changeSceneVariant(scene: Scene, backgroundURL: string) {
 		});
 	}
 
-	// @ts-expect-error Type error due to overtly strict types
 	if (game.settings.get("miskas-variant-picker", "showSuccess"))
 		ui.notifications.success(`Changed ${scene.name} background src to ${backgroundURL}`);
 }
@@ -72,7 +71,7 @@ async function selectVariant(variants: Variants): Promise<any> {
 	});
 }
 
-function filterVariants(variants: Variants, filter: Filter): void | false {
+function filterVariants(variants: Variants, filter: VariantFilter): void | false {
 	if (Object.keys(filter).length === 0) return false;
 	variants.entries().forEach((variant) => {
 		if (!variant[1].includes(filter?.contains || "")) variants.delete(variant[0]);
@@ -94,7 +93,6 @@ export async function variantPicker(li: HTMLElement) {
 		const scene = fromUuidSync(sceneId) as Scene;
 		// @ts-expect-error V14
 		const background = game.release.generation >= 14 ? scene.firstLevel.background.src : scene.background.src;
-		// @ts-expect-error Type error due to overtly strict types
 		const flags = scene.flags["miskas-variant-picker"];
 		const regex = flags?.regex?.scene ?? /.*-([0-9]+x[0-9]+)?/;
 		const lastIndex = background.lastIndexOf("/") + 1;
@@ -115,7 +113,6 @@ export async function variantPicker(li: HTMLElement) {
 
 		if (variants.size <= 0) throw new Error("No variants found");
 
-		// @ts-expect-error Type error due to overtly strict types
 		if (flags?.filter) filterVariants(variants, scene.flags["miskas-variant-picker"].filter);
 
 		const variant = await selectVariant(variants);

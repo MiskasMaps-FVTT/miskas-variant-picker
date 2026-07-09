@@ -1,4 +1,10 @@
 {
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules"
+	],
 	"compilerOptions": {
 		"types": [
 			"fvtt-types"
@@ -25,8 +31,5 @@
 		"noImplicitAny": true,
 		"skipLibCheck": true,
 		"allowImportingTsExtensions": true
-	},
-	"include": [
-		"src"
-	]
+	}
 }
