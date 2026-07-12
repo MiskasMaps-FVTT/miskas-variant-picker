@@ -14,6 +14,7 @@ declare module "fvtt-types/configuration" {
 		Scene: {
 			"miskas-variant-picker": {
 				variants: { [key: string]: VariantFlag };
+				enabled: boolean;
 				[variantName: `variants.${string}`]: VariantFlag;
 				regex: VariantRegEx; // @todo Remove after Variants2 is completed
 				"regex.scene": VariantRegEx["scene"]; // @todo Remove after Variants2 is completed
@@ -27,7 +28,6 @@ declare module "fvtt-types/configuration" {
 	}
 
 	interface SettingConfig {
-		"miskas-variant-picker.globalEnable": boolean;
 		"miskas-variant-picker.showSuccess": boolean;
 		"miskas-variant-picker.buildingMode": boolean;
 	}

@@ -13,7 +13,6 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 			if (scene === undefined) return false;
 			const src = scene?.background?.src;
 			if (src?.search(scene.flags[MODULE_NAME]?.prefix ?? "/miskasmaps-") >= 0) return true;
-			if (game.settings.get(MODULE_NAME, "globalEnable")) return true;
 			return false;
 		},
 		name: "Change Scene Variant",
@@ -31,15 +30,6 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 });
 
 Hooks.once("init", () => {
-	game.settings.register(MODULE_NAME, "globalEnable", {
-		name: "Enable Globally",
-		hint: "Enable the variant picker on modules other than Miska's Maps scenes",
-		scope: "user",
-		config: true,
-		type: Boolean,
-		default: false,
-	});
-
 	game.settings.register(MODULE_NAME, "showSuccess", {
 		name: "Show Success Message",
 		hint: "Whether to show a success message when variant is changed",
@@ -58,6 +48,8 @@ Hooks.once("init", () => {
 		default: false,
 	});
 
+	// @ts-expect-error
+	CONFIG.mvptest = VP;
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
 });
