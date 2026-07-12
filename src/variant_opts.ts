@@ -10,9 +10,13 @@ export function getVariant(scene: Scene, variantName: string) {
 	return scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 }
 
-export function getVariantObject(scene: Scene, variantName: string) {
+export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
 	const flags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
-	return new Variant(flags.name, flags.sceneUuid, flags.data);
+	if (flags.name == "base") {
+		return new BaseVariant(flags.sceneUuid, flags.data as BaseVariantData);
+	} else {
+		return new Variant(flags.name, flags.sceneUuid, flags.data);
+	}
 }
 
 /**
@@ -51,8 +55,6 @@ export class BaseVariant implements VariantFlag {
 	data: VariantData;
 	scene: Scene;
 
-	constructor(scene: Scene);
-	constructor(sceneUuid: string);
 	constructor(scene: Scene, data?: BaseVariantData);
 	constructor(sceneUuid: string, data?: BaseVariantData);
 	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData) {
@@ -65,9 +67,7 @@ export class BaseVariant implements VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
-		if (data !== undefined) {
-			this.data = data;
-		}
+		this.data = data;
 	}
 
 	setFlag() {
@@ -83,7 +83,57 @@ export class BaseVariant implements VariantFlag {
 		return baseVariant;
 	}
 
-	updateVariant() {
+	update() {
+		this.data.background = this.scene.background.src;
+		this.data.foreground = this.scene.foreground;
+		this.data.createWallData = this.scene.walls.values().toArray();
+		this.data.createLightData = this.scene.lights.values().toArray() as unknown as AmbientLightDocument.CreateData[];
+	}
+
+	activateVariant() {
+		const scene = this.scene;
+		const baseVariant = this.getBaseVariant();
+
+		// Clear the scene
+		scene.deleteEmbeddedDocuments(
+			"Wall",
+			scene.walls
+				.entries()
+				.map((x) => x[0])
+				.toArray(),
+		);
+		scene.deleteEmbeddedDocuments(
+			"AmbientLight",
+			scene.lights
+				.entries()
+				.map((x) => x[0])
+				.toArray(),
+		);
+
+		// Populate the scene with variant data
+		this.scene.background.src = this.data.background;
+		this.scene.foreground = this.data.foreground;
+		scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
+		scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
+		if (game.settings.get("miskas-variant-picker", "showSuccess"))
+			ui.notifications.success("Variant changed successfully");
+	}
+}
+
+export class Variant extends BaseVariant {
+	constructor(variantName: string, scene: Scene, data: VariantData);
+	constructor(variantName: string, sceneUuid: string, data: VariantData);
+	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData) {
+		if (typeof sceneOrUuid == "string") {
+			super(sceneOrUuid);
+		} else {
+			super(sceneOrUuid);
+		}
+		this.name = variantName;
+		this.data = data;
+	}
+
+	override update() {
 		const baseVariant = this.getBaseVariant();
 
 		// Update
@@ -133,7 +183,7 @@ export class BaseVariant implements VariantFlag {
 			.toArray() as unknown as AmbientLightDocument.CreateData[];
 	}
 
-	activateVariant() {
+	override activateVariant() {
 		const scene = this.scene;
 		const baseVariant = this.getBaseVariant();
 
@@ -183,19 +233,8 @@ export class BaseVariant implements VariantFlag {
 				scene.createEmbeddedDocuments("AmbientLight", this.data?.createLightData, { keepId: true });
 			}
 		}
-	}
-}
 
-export class Variant extends BaseVariant {
-	constructor(variantName: string, scene: Scene, data: VariantData);
-	constructor(variantName: string, sceneUuid: string, data: VariantData);
-	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData) {
-		if (typeof sceneOrUuid == "string") {
-			super(sceneOrUuid);
-		} else {
-			super(sceneOrUuid);
-		}
-		this.name = variantName;
-		this.data = data;
+		if (game.settings.get("miskas-variant-picker", "showSuccess"))
+			ui.notifications.success("Variant changed successfully");
 	}
 }
