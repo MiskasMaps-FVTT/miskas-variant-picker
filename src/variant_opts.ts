@@ -67,17 +67,21 @@ export class Variant extends VariantFlag {
 	getBaseVariant() {
 		const baseVariant = getVariantObject(this.scene, "base");
 		if (baseVariant === undefined) {
-			ui.notifications.error(`Scene ${this.sceneUuid} doesn't have a base variant`)
-			throw new Error("no base variant")
+			ui.notifications.error(`Scene ${this.sceneUuid} doesn't have a base variant`);
+			throw new Error("no base variant");
 		}
-		return baseVariant
+		return baseVariant;
 	}
 
 	updateVariant() {
-		const baseVariant = this.getBaseVariant()
+		const baseVariant = this.getBaseVariant();
+
+		// Update
+		this.data.background = this.scene.background.src;
+		this.data.foreground = this.scene.foreground;
 
 		// Update walls
-		const baseWallIds = baseVariant.data?.createWallData?.map((x) => x._id) as string[] ?? [];
+		const baseWallIds = (baseVariant.data?.createWallData?.map((x) => x._id) as string[]) ?? [];
 		const sceneWallIds = [...this.scene.walls.keys()];
 		const wallsAdded = new Set();
 		const wallsDeleted = new Set();
@@ -98,7 +102,7 @@ export class Variant extends VariantFlag {
 			.toArray();
 
 		// Update lights
-		const baseLightIds = baseVariant.data?.createLightData?.map((x) => x._id) as string[] ?? [];
+		const baseLightIds = (baseVariant.data?.createLightData?.map((x) => x._id) as string[]) ?? [];
 		const sceneLightIds = [...this.scene.lights.keys()];
 		const lightsAdded = new Set();
 		const lightsDeleted = new Set();
@@ -120,8 +124,8 @@ export class Variant extends VariantFlag {
 	}
 
 	activateVariant() {
-		const scene = fromUuidSync(this.sceneUuid) as Scene;
-		const baseVariant = this.getBaseVariant()
+		const scene = this.scene;
+		const baseVariant = this.getBaseVariant();
 		// Clear the scene
 		scene.deleteEmbeddedDocuments(
 			"Wall",
@@ -137,11 +141,16 @@ export class Variant extends VariantFlag {
 				.map((x) => x[0])
 				.toArray(),
 		);
+
+		// Populate the scene with variant data
+		this.scene.background.src = this.data.background;
+		this.scene.foreground = this.data.foreground;
 		if (this.name == "base") {
 			scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
 			scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
 		} else {
-			// Populate the scene with variant data
+			this.data.background = this.scene.background.src;
+			this.data.foreground = this.scene.foreground;
 			if (baseVariant.data.createWallData !== undefined) {
 				scene.createEmbeddedDocuments(
 					"Wall",
