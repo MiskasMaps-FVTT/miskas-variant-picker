@@ -1,3 +1,5 @@
+import { MODULE_NAME } from "./constants";
+
 function isValidRegex(pattern: RegExp | string): boolean {
 	try {
 		new RegExp(pattern);
@@ -49,17 +51,17 @@ function openDialog(scene: Scene) {
 						return false;
 					}
 
-					if (variantRegex) scene.setFlag("miskas-variant-picker", "regex", { variant: variantRegex });
-					else scene.setFlag("miskas-variant-picker", "regex", { variant: undefined });
+					if (variantRegex) scene.setFlag(MODULE_NAME, "regex.variant", variantRegex);
+					else scene.unsetFlag(MODULE_NAME, "regex.variant");
 
-					if (sceneRegex) scene.setFlag("miskas-variant-picker", "regex", { scene: sceneRegex });
-					else scene.setFlag("miskas-variant-picker", "regex", { scene: undefined });
+					if (sceneRegex) scene.setFlag(MODULE_NAME, "regex.scene", sceneRegex);
+					else scene.unsetFlag(MODULE_NAME, "regex.scene");
 
-					if (prefix) scene.setFlag("miskas-variant-picker", "prefix", prefix);
-					else scene.unsetFlag("miskas-variant-picker", "prefix");
+					if (prefix) scene.setFlag(MODULE_NAME, "prefix", prefix);
+					else scene.unsetFlag(MODULE_NAME, "prefix");
 
-					if (contains) scene.setFlag("miskas-variant-picker", "filter", { contains: contains });
-					else scene.setFlag("miskas-variant-picker", "filter", { contains: undefined });
+					if (contains) scene.setFlag(MODULE_NAME, "filter.contains", contains);
+					else scene.unsetFlag(MODULE_NAME, "filter.contains");
 
 					dialog.close();
 				},

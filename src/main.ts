@@ -1,4 +1,6 @@
+import { MODULE_NAME } from "./constants.ts";
 import { setVariantOption } from "./variant_building.ts";
+import * as VP from "./variant_opts.ts";
 import { variantPicker } from "./variant_picker.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
@@ -8,10 +10,10 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		condition: (li) => {
 			if (!game.user.isGM) return false;
 			const scene = game.scenes?.get(li.dataset.entryId ?? "");
-			if (scene === undefined) return false
+			if (scene === undefined) return false;
 			const src = scene?.background?.src;
-			if (src?.search(scene.flags["miskas-variant-picker"]?.prefix ?? "/miskasmaps-") >= 0) return true;
-			if (game.settings.get("miskas-variant-picker", "globalEnable")) return true;
+			if (src?.search(scene.flags[MODULE_NAME]?.prefix ?? "/miskasmaps-") >= 0) return true;
+			if (game.settings.get(MODULE_NAME, "globalEnable")) return true;
 			return false;
 		},
 		name: "Change Scene Variant",
@@ -21,7 +23,7 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		icon: `<i class="fa-solid fa-gears"></i>`,
 		condition: () => {
 			if (!game.user.isGM) return false;
-			if (game.settings.get("miskas-variant-picker", "buildingMode")) return true;
+			if (game.settings.get(MODULE_NAME, "buildingMode")) return true;
 			return false;
 		},
 		name: "Modify Scene Variant",
@@ -29,7 +31,7 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 });
 
 Hooks.once("init", () => {
-	game.settings.register("miskas-variant-picker", "globalEnable", {
+	game.settings.register(MODULE_NAME, "globalEnable", {
 		name: "Enable Globally",
 		hint: "Enable the variant picker on modules other than Miska's Maps scenes",
 		scope: "user",
@@ -38,7 +40,7 @@ Hooks.once("init", () => {
 		default: false,
 	});
 
-	game.settings.register("miskas-variant-picker", "showSuccess", {
+	game.settings.register(MODULE_NAME, "showSuccess", {
 		name: "Show Success Message",
 		hint: "Whether to show a success message when variant is changed",
 		scope: "user",
@@ -47,7 +49,7 @@ Hooks.once("init", () => {
 		default: true,
 	});
 
-	game.settings.register("miskas-variant-picker", "buildingMode", {
+	game.settings.register(MODULE_NAME, "buildingMode", {
 		name: "Variant Building Mode",
 		hint: "Enables extra actions in the context menu to help with building variants",
 		scope: "user",

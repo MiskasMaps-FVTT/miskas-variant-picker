@@ -1,4 +1,4 @@
-import { VariantFilter, Variants } from "./types.ts";
+import type { VariantFilter, Variants } from "./types.ts";
 
 function incorrectType(error: string, val: any) {
 	throw new Error(error + " (" + typeof val + " provided)");
