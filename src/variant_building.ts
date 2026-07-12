@@ -1,4 +1,4 @@
-import { MODULE_NAME } from "./constants";
+import { MODULE_NAME } from "./constants.ts";
 
 function isValidRegex(pattern: RegExp | string): boolean {
 	try {
@@ -37,12 +37,10 @@ function openDialog(scene: Scene) {
 					const variantRegex = elements.variant_regex.value;
 					const prefix = elements.prefix.value;
 					const contains = elements.contains.value;
-
 					if (!isValidRegex(sceneRegex)) {
 						ui.notifications.error(sceneRegex + " is not a valid RegEx");
 						return false;
 					}
-
 					if (!isValidRegex(variantRegex)) {
 						ui.notifications.error(variantRegex + " is not a valid RegEx");
 						return false;
@@ -50,19 +48,14 @@ function openDialog(scene: Scene) {
 						ui.notifications.error("Variant name RegEx must have at least one capture group");
 						return false;
 					}
-
 					if (variantRegex) scene.setFlag(MODULE_NAME, "regex.variant", variantRegex);
 					else scene.unsetFlag(MODULE_NAME, "regex.variant");
-
 					if (sceneRegex) scene.setFlag(MODULE_NAME, "regex.scene", sceneRegex);
 					else scene.unsetFlag(MODULE_NAME, "regex.scene");
-
 					if (prefix) scene.setFlag(MODULE_NAME, "prefix", prefix);
 					else scene.unsetFlag(MODULE_NAME, "prefix");
-
 					if (contains) scene.setFlag(MODULE_NAME, "filter.contains", contains);
 					else scene.unsetFlag(MODULE_NAME, "filter.contains");
-
 					dialog.close();
 				},
 			},

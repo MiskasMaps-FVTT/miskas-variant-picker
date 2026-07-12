@@ -18,19 +18,25 @@ export function getVariantObject(scene: Scene, variantName: string) {
 /**
  * Data stored in the variant
  */
-type VariantData = {
-	background?: string;
-	foreground?: string;
-	createWallData?: WallDocument.CreateData[];
-	createLightData?: AmbientLightDocument.CreateData[];
+type BaseVariantData = {
+	background: string;
+	foreground: string;
+	createWallData: WallDocument.CreateData[];
+	createLightData: AmbientLightDocument.CreateData[];
+};
+
+/**
+ * Data stored in the variant
+ */
+type VariantData = Partial<BaseVariantData> & {
 	deleteWallIds?: any[]; // Can't find the definite type of ids
 	deleteLightIds?: any[]; // Can't find the definite type of ids
 };
 
 /**
- * All the data that exists in the variant flag
+ * All the data that exists in the base variant flag
  */
-export class VariantFlag {
+export interface VariantFlag {
 	name: string;
 	sceneUuid: string;
 	data: VariantData;
@@ -39,15 +45,17 @@ export class VariantFlag {
 /**
  * Variant object to be used inside js
  */
-export class Variant extends VariantFlag {
-	readonly scene: Scene;
+export class BaseVariant implements VariantFlag {
+	name: string = "base";
+	sceneUuid: string;
+	data: VariantData;
+	scene: Scene;
 
-	constructor(name: string, scene: Scene, data: VariantData);
-	constructor(name: string, sceneUuid: string, data: VariantData);
-	constructor(name: string, sceneOrUuid: Scene | string, data: VariantData) {
-		super();
-
-		this.name = name;
+	constructor(scene: Scene);
+	constructor(sceneUuid: string);
+	constructor(scene: Scene, data?: BaseVariantData);
+	constructor(sceneUuid: string, data?: BaseVariantData);
+	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData) {
 		if (typeof sceneOrUuid == "string") {
 			const parsed = foundry.utils.parseUuid(sceneOrUuid);
 			if (parsed.type !== "Scene") throw new Error("Provided UUID is not a Scene UUID");
@@ -57,7 +65,9 @@ export class Variant extends VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
-		this.data = data;
+		if (data !== undefined) {
+			this.data = data;
+		}
 	}
 
 	setFlag() {
@@ -126,6 +136,7 @@ export class Variant extends VariantFlag {
 	activateVariant() {
 		const scene = this.scene;
 		const baseVariant = this.getBaseVariant();
+
 		// Clear the scene
 		scene.deleteEmbeddedDocuments(
 			"Wall",
@@ -172,5 +183,19 @@ export class Variant extends VariantFlag {
 				scene.createEmbeddedDocuments("AmbientLight", this.data?.createLightData, { keepId: true });
 			}
 		}
+	}
+}
+
+export class Variant extends BaseVariant {
+	constructor(variantName: string, scene: Scene, data: VariantData);
+	constructor(variantName: string, sceneUuid: string, data: VariantData);
+	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData) {
+		if (typeof sceneOrUuid == "string") {
+			super(sceneOrUuid);
+		} else {
+			super(sceneOrUuid);
+		}
+		this.name = variantName;
+		this.data = data;
 	}
 }
