@@ -2,7 +2,7 @@ import { MODULE_NAME } from "./constants";
 
 export function addVariant(scene: Scene, variantName: string) {
 	if (scene.getFlag(MODULE_NAME, `variants.${variantName}`) === undefined) {
-		const variant = variantName == "Base" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
+		const variant = variantName == "Default" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
 		variant.update();
 		scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
 	}
@@ -25,7 +25,7 @@ export function updateActive(scene: Scene) {
 }
 
 export function deleteVariant(scene: Scene, variantName: string) {
-	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Base");
+	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Default");
 	scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
 }
 
@@ -36,7 +36,7 @@ export function getVariant(scene: Scene, variantName: string) {
 export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
 	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 	if (variantFlags === undefined) return undefined;
-	if (variantFlags?.name == "Base") {
+	if (variantFlags?.name == "Default") {
 		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData);
 	} else {
 		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data);
@@ -75,7 +75,7 @@ export interface VariantFlag {
  * Variant object to be used inside js
  */
 export class BaseVariant implements VariantFlag {
-	name: string = "Base";
+	name: string = "Default";
 	sceneUuid: string;
 	data: VariantData;
 	scene: Scene;
@@ -96,7 +96,7 @@ export class BaseVariant implements VariantFlag {
 	}
 
 	getBaseVariant() {
-		const baseVariant = getVariantObject(this.scene, "Base");
+		const baseVariant = getVariantObject(this.scene, "Default");
 		if (baseVariant === undefined) {
 			ui.notifications.error(`Scene ${this.sceneUuid} doesn't have a base variant`);
 			throw new Error("no base variant");
@@ -225,7 +225,7 @@ export class Variant extends BaseVariant {
 			variant.scene.foreground = variant.data.foreground;
 		} // @todo implement levels support
 
-		if (variant.name == "Base") {
+		if (variant.name == "Default") {
 			scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
 			scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
 		} else {

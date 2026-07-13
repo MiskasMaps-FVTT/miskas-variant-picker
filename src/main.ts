@@ -52,10 +52,10 @@ Hooks.on("renderSceneConfig", (app) => {
 		// @ts-expect-error
 		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
 		if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-			await deleteVariant(this.document, variantName);
+			deleteVariant(this.document, variantName);
 		}
 		if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-			(this.document as Scene).setFlag(MODULE_NAME, "enabled", false)
+			(this.document as Scene).setFlag(MODULE_NAME, "enabled", false);
 		}
 	};
 	app.options.actions.activateVariant = async function (event) {
@@ -70,7 +70,7 @@ Hooks.on("renderSceneConfig", (app) => {
 		const enabled = this.document.getFlag(MODULE_NAME, "enabled");
 		this.document.setFlag(MODULE_NAME, "enabled", !enabled);
 		if (!enabled) {
-			addVariant(this.document, "Base")
+			addVariant(this.document, "Default");
 		}
 	};
 });
