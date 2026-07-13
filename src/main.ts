@@ -24,7 +24,9 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 			});
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
-		condition: game.user.isGM, // Key deprecated since V14, use visible instead
+		condition: (e) => {
+			return game.user.isGM && (fromUuidSync("Scene." + e.dataset.entryId) as Scene).getFlag(MODULE_NAME, "enabled");
+		}, // Key deprecated since V14, use visible instead
 		name: "Change Scene Variant", // Key deprecated since V14, use label instead
 	});
 });
@@ -50,7 +52,10 @@ Hooks.on("renderSceneConfig", (app) => {
 		// @ts-expect-error
 		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
 		if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-			deleteVariant(this.document, variantName);
+			await deleteVariant(this.document, variantName);
+		}
+		if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+			(this.document as Scene).setFlag(MODULE_NAME, "enabled", false)
 		}
 	};
 	app.options.actions.activateVariant = async function (event) {
@@ -60,6 +65,13 @@ Hooks.on("renderSceneConfig", (app) => {
 	};
 	app.options.actions.updateVariant = async function () {
 		updateActive(this.document);
+	};
+	app.options.actions.toggleVariants = function () {
+		const enabled = this.document.getFlag(MODULE_NAME, "enabled");
+		this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+		if (!enabled) {
+			addVariant(this.document, "Base")
+		}
 	};
 });
 
@@ -82,7 +94,7 @@ Hooks.once("init", () => {
 		label: "Variants",
 	});
 
-	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj).length);
+	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);

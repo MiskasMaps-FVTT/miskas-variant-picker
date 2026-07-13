@@ -1,13 +1,15 @@
 import { MODULE_NAME } from "./constants";
 
 export function addVariant(scene: Scene, variantName: string) {
-	return scene.setFlag(MODULE_NAME, "variants", {
-		[`${variantName}`]: { name: variantName, sceneUuid: scene.uuid, data: {} },
-	});
+	if (scene.getFlag(MODULE_NAME, `variants.${variantName}`) === undefined) {
+		const variant = variantName == "Base" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
+		variant.update();
+		scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
+	}
 }
 
 export function activateVariant(scene: Scene, variantName: string) {
-	Variant.activateVariant(getVariantObject(scene, variantName));
+	return Variant.activateVariant(getVariantObject(scene, variantName));
 }
 
 export function setVariant(scene: Scene, variant: VariantFlag) {
@@ -19,11 +21,12 @@ export function setVariant(scene: Scene, variant: VariantFlag) {
 }
 
 export function updateActive(scene: Scene) {
-	getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update()
+	return getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update();
 }
 
 export function deleteVariant(scene: Scene, variantName: string) {
-	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
+	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Base");
+	scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
 }
 
 export function getVariant(scene: Scene, variantName: string) {
@@ -31,11 +34,12 @@ export function getVariant(scene: Scene, variantName: string) {
 }
 
 export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
-	const flags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
-	if (flags.name == "Base") {
-		return new BaseVariant(flags.sceneUuid, flags.data as BaseVariantData);
+	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
+	if (variantFlags === undefined) return undefined;
+	if (variantFlags?.name == "Base") {
+		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData);
 	} else {
-		return new Variant(flags.name, flags.sceneUuid, flags.data);
+		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data);
 	}
 }
 
@@ -88,11 +92,7 @@ export class BaseVariant implements VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
-		this.data = data;
-	}
-
-	setFlag() {
-		setVariant(this.scene, this);
+		this.data = data ?? {};
 	}
 
 	getBaseVariant() {
@@ -102,6 +102,10 @@ export class BaseVariant implements VariantFlag {
 			throw new Error("no base variant");
 		}
 		return baseVariant;
+	}
+
+	setFlag() {
+		setVariant(this.scene, this);
 	}
 
 	update() {
@@ -119,7 +123,6 @@ export class BaseVariant implements VariantFlag {
 
 	static async activateVariant(variant: BaseVariant) {
 		const scene = variant.scene;
-		const baseVariant = variant.getBaseVariant();
 
 		// Clear the scene
 		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
@@ -131,8 +134,8 @@ export class BaseVariant implements VariantFlag {
 		} // @todo implement levels support
 
 		// Populate the scene with variant data
-		scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
-		scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
+		scene.createEmbeddedDocuments("Wall", variant.data?.createWallData, { keepId: true });
+		scene.createEmbeddedDocuments("AmbientLight", variant.data?.createLightData, { keepId: true });
 		if (game.settings.get("miskas-variant-picker", "showSuccess"))
 			ui.notifications.success("Variant changed successfully");
 		variant.scene.background.src = variant.data.background;
