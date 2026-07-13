@@ -32,7 +32,7 @@ export function getVariant(scene: Scene, variantName: string) {
 
 export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
 	const flags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
-	if (flags.name == "base") {
+	if (flags.name == "Base") {
 		return new BaseVariant(flags.sceneUuid, flags.data as BaseVariantData);
 	} else {
 		return new Variant(flags.name, flags.sceneUuid, flags.data);
@@ -71,7 +71,7 @@ export interface VariantFlag {
  * Variant object to be used inside js
  */
 export class BaseVariant implements VariantFlag {
-	name: string = "base";
+	name: string = "Base";
 	sceneUuid: string;
 	data: VariantData;
 	scene: Scene;
@@ -96,7 +96,7 @@ export class BaseVariant implements VariantFlag {
 	}
 
 	getBaseVariant() {
-		const baseVariant = getVariantObject(this.scene, "base");
+		const baseVariant = getVariantObject(this.scene, "Base");
 		if (baseVariant === undefined) {
 			ui.notifications.error(`Scene ${this.sceneUuid} doesn't have a base variant`);
 			throw new Error("no base variant");
@@ -222,7 +222,7 @@ export class Variant extends BaseVariant {
 			variant.scene.foreground = variant.data.foreground;
 		} // @todo implement levels support
 
-		if (variant.name == "base") {
+		if (variant.name == "Base") {
 			scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
 			scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
 		} else {
