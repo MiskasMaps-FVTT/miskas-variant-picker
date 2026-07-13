@@ -8,6 +8,33 @@ import {
 	updateActive,
 } from "./variant_opts.ts";
 
+function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
+	updateActive(doc.scene);
+}
+
+function registerUpdateHooks(value: boolean) {
+	if (value) {
+		updateActive(canvas.scene);
+		Object.values(foundry.canvas.placeables)
+			.filter((x) => typeof x == "function")
+			.forEach((x) => {
+				// @ts-expect-error
+				Hooks.on(`draw${x.name}`, updateParent);
+				// @ts-expect-error
+				Hooks.on(`destroy${x.name}`, updateParent);
+			});
+	} else {
+		Object.values(foundry.canvas.placeables)
+			.filter((x) => typeof x == "function")
+			.forEach((x) => {
+				// @ts-expect-error
+				Hooks.off(`draw${x.name}`, updateParent);
+				// @ts-expect-error
+				Hooks.off(`destroy${x.name}`, updateParent);
+			});
+	}
+}
+
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
 		callback: async (li) => {
@@ -68,14 +95,13 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {
-	console.log(controls);
 	controls.variants = {
 		name: "variants",
 		title: "Variants",
 		icon: "fa-solid fa-swatchbook",
 		order: Object.keys(controls).length,
 		visible: game.user.isGM && !!canvas.scene?.flags[MODULE_NAME].enabled,
-		activeTool: "",
+		activeTool: "saveVariant",
 		tools: {
 			saveVariant: {
 				name: "saveVariant",
@@ -104,6 +130,16 @@ Hooks.on("getSceneControlButtons", (controls) => {
 				visible: game.user.isGM,
 				onChange: () => addVariantPopup(canvas.scene),
 			},
+			constantUpdate: {
+				name: "constantUpdate",
+				title: "Toggle Continuous Update",
+				icon: "fa-solid fa-repeat",
+				order: 3,
+				active: game.settings.settings.get(`${MODULE_NAME}.constantUpdate`).config,
+				toggle: true,
+				visible: game.user.isGM,
+				onChange: (_, value) => game.settings.set(MODULE_NAME, "constantUpdate", value),
+			},
 		},
 	};
 });
@@ -115,8 +151,19 @@ Hooks.once("init", () => {
 		scope: "user",
 		config: true,
 		type: Boolean,
-		default: true,
+		default: false,
 	});
+	game.settings.register(MODULE_NAME, "constantUpdate", {
+		name: "Constant Variant Updates",
+		hint: "Update variant data on every change to the scene. May cause slow downs on scenes with many objects",
+		scope: "user",
+		config: true,
+		type: Boolean,
+		default: false,
+		onChange: registerUpdateHooks,
+	});
+
+	registerUpdateHooks(game.settings.settings.get(`${MODULE_NAME}.constantUpdate`).config);
 
 	foundry.applications.sheets.SceneConfig.PARTS.variants = {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
