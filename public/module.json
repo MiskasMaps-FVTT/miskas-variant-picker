@@ -5,7 +5,7 @@
 	"version": "2.0.0-alpha.2",
 	"compatibility": {
 		"maximum": "16",
-		"verified": "13"
+		"verified": "14"
 	},
 	"authors": [
 		{
