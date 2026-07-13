@@ -1,0 +1,29 @@
+<div class="tab {{#if tab.active}}active{{/if}}" data-group="{{ tab.group }}" data-tab="{{ tab.id }}">
+    <fieldset>
+        <legend class="control">
+            <span>Variants</span>
+            <button type="button" class="icon fa-regular fa-square-plus inline-control" data-action="addVariant"
+                    data-tooltip aria-label="Add Variant"></button>
+        </legend>
+        <ol class="variants plain flexcol">
+	         {{#if (lt (objectLength document.flags.miskas-variant-picker.variants) 2)}}
+                <p class="hint">Variants allow you to have different wall and light configurations in one scene</p>
+            {{/if}}
+            {{#each document.flags.miskas-variant-picker.variants}}
+            <li class="level" data-variant-name="{{ this.name }}">
+                <strong class="name draggable">
+                    {{ this.name }}
+                    {{#if (eq this.name ../document/flags/miskas-variant-picker/active)}}<i class="fa-solid fa-bullseye" inert></i>{{/if}}
+                </strong>
+                <span class="meta">{{ meta }}</span>
+                <div class="controls flexrow">
+                    <button type="button" class="inline-control fa-solid fa-bullseye fa-fw"
+                            data-tooltip aria-label="Activate Variant" data-action="activateVariant"></button>
+                    <button type="button" class="inline-control icon fa-solid fa-trash fa-fw"
+                            data-action="deleteVariant" data-tooltip aria-label="delete Variant"></button>
+                </div>
+            </li>
+            {{/each}}
+        </ol>
+    </fieldset>
+</div>

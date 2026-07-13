@@ -1,6 +1,6 @@
 import { MODULE_NAME } from "./constants.ts";
 import { setVariantOption } from "./variant_building.ts";
-import * as VP from "./variant_opts.ts";
+import { addVariant, deleteVariant, activateVariant } from "./variant_opts.ts";
 import { variantPicker } from "./variant_picker.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
@@ -29,6 +29,35 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	});
 });
 
+Hooks.on("renderSceneConfig", (app) => {
+	app.options.actions.addVariant = async function () {
+		const { variantName } = await foundry.applications.api.DialogV2.input({
+			window: { title: "Create Variant" },
+			content: `
+			<div class="form-group">
+				<form>
+					<label>Name</label>
+					<div class="form-fields">
+						<input type="text" name="variantName" placeholder="Variant">
+					</div>
+				</form>
+			</div>
+			`,
+		});
+		addVariant(this.document, variantName as string);
+	};
+	app.options.actions.deleteVariant = async function (event) {
+		// @ts-expect-error
+		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+		deleteVariant(this.document, variantName);
+	};
+	app.options.actions.activateVariant = async function (event) {
+		// @ts-expect-error
+		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+		activateVariant(this.document, variantName);
+	};
+});
+
 Hooks.once("init", () => {
 	game.settings.register(MODULE_NAME, "showSuccess", {
 		name: "Show Success Message",
@@ -48,8 +77,17 @@ Hooks.once("init", () => {
 		default: false,
 	});
 
-	// @ts-expect-error
-	CONFIG.mvptest = VP;
+	foundry.applications.sheets.SceneConfig.PARTS.variants = {
+		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
+	};
+	foundry.applications.sheets.SceneConfig.TABS.sheet.tabs.push({
+		id: "variants",
+		icon: "fa-solid fa-shapes",
+		label: "Variants",
+	});
+
+	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj).length);
+
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
 });
