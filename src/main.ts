@@ -1,6 +1,34 @@
 import { MODULE_NAME } from "./constants.ts";
 import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
 
+Hooks.on("getSceneContextOptions", (_, menuItems) => {
+	menuItems.push({
+		callback: async (li) => {
+			const sceneUuid = "Scene." + li.dataset.entryId;
+			const scene = fromUuidSync(sceneUuid) as Scene;
+			const variants = scene.getFlag(MODULE_NAME, "variants");
+			foundry.applications.api.DialogV2.wait({
+				window: { title: "Select Variant" },
+				buttons: (() => {
+					const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
+					for (const v of Object.values(variants)) {
+						const variantName = v.name;
+						buttons.push({
+							label: variantName,
+							action: variantName,
+							callback: () => activateVariant(scene, variantName),
+						});
+					}
+					return buttons;
+				})(),
+			});
+		}, // Key deprecated since V14, use onClick instead
+		icon: `<i class="fa-solid fa-swatchbook"></i>`,
+		condition: game.user.isGM, // Key deprecated since V14, use visible instead
+		name: "Change Scene Variant", // Key deprecated since V14, use label instead
+	});
+});
+
 Hooks.on("renderSceneConfig", (app) => {
 	app.options.actions.addVariant = async function () {
 		const { variantName } = await foundry.applications.api.DialogV2.input({
