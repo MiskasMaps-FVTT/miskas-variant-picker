@@ -1,27 +1,19 @@
-This module allows you to easily change the background of a scene through the context menu.
-
-Designed for the map naming syntax of Miska's Maps and locked to those modules by default, but it is possible to define custom RegExes to find the correct variants in the same directory and filter them if needed.
+This module allows you to easily create variants of existing scenes when you have multiple mostly same scenes.
+Each variant can be easily changed to and modified without any hassle.
+The aim of this module is to remove clutter from your scene directories by consolidating multiple scenes into a single one.
 
 ## How to use
+Variants can be changed in three places: the scene config, scene context menu, and the variants scene controls.
+The scene config menu is where you can manage your variants: create, delete and add them from a list.
+The control tools allow you to create, switch, and save variants easily.
 
-### Changing scene variants
-Changing scene variants can be done through the scene context menu. Click the **Change Scene Variant** button and select the variant you want.
+Each modification to a scene must be manually saved from the scene config or the tools, unless the continuous updates setting is enabled, where each change is saved immediately, but this may cause some performance issues with larges scenes when editing them. It is recommended to keep this setting of to ensure unwanted changes aren't made to the variants.
 
-### Variant building
-Enable the variant building setting from the module settings.
+Each scene that uses variants has a single variant named "_Default_". This variant acts as the base for all other variants and changes to this variant are applied to all other variants. This allows you to build the base scene first, and apply minor changes as needed to all the variants.
 
-<img width="321" height="366" alt="image" src="https://github.com/user-attachments/assets/d4c8a50e-5d1c-4d31-8372-7d9ddf6a3162" />
-
-Do not use Scene RegEx and Prefix together. Scene RegEx is used to dynamically define the prefix.
-
-**Scene RegEx**: part of the filename of the background of the current scene that is used to find variants.
-
-**Variant RegEx**: used to get the name of the variant for display. It **must** include at least one capture group, the first of which should contain the variant name.
-
-**Prefix**: A string to use to search for matching variants. If a file contains this string, it is included in the potential matches for variants, which are further filtered to only those that contain a variant name.
-
-**Contains**: An extra filter that selects only scenes containing this string.
+Currently, variants allow you to have distinct walls, lights, and backgrounds for each variant. V14 levels support also exists, but all variants have the same levels. Each variant can have different level configurations, but not additional or removed levels.
 
 
-## Install
-You can install the module by using the following manifest url: https://github.com/MiskasMaps-FVTT/miskas-variant-picker/releases/latest/download/module.json
+
+### ⚠️ Caution! ⚠️
+Changing variants overwrites _all_ unsaved changes!
