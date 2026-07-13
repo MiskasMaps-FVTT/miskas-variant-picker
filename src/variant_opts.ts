@@ -113,25 +113,13 @@ export class BaseVariant implements VariantFlag {
 		this.constructor.activateVariant(this);
 	}
 
-	static activateVariant(variant: BaseVariant) {
+	static async activateVariant(variant: BaseVariant) {
 		const scene = variant.scene;
 		const baseVariant = variant.getBaseVariant();
 
 		// Clear the scene
-		scene.deleteEmbeddedDocuments(
-			"Wall",
-			scene.walls
-				.entries()
-				.map((x) => x[0])
-				.toArray(),
-		);
-		scene.deleteEmbeddedDocuments(
-			"AmbientLight",
-			scene.lights
-				.entries()
-				.map((x) => x[0])
-				.toArray(),
-		);
+		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
+		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
 
 		if (!foundry.utils.isNewerVersion(game.version, 14)) {
 			variant.scene.background.src = variant.data.background;
@@ -178,12 +166,12 @@ export class Variant extends BaseVariant {
 		const wallsAdded = new Set();
 		const wallsDeleted = new Set();
 		for (const id of sceneWallIds) {
-			if (!baseWallIds.includes(id)) {
+			if (!baseWallIds?.includes(id)) {
 				wallsAdded.add(id);
 			}
 		}
 		for (const id of baseWallIds) {
-			if (!sceneWallIds.includes(id)) {
+			if (!sceneWallIds?.includes(id)) {
 				wallsDeleted.add(id);
 			}
 		}
@@ -199,12 +187,12 @@ export class Variant extends BaseVariant {
 		const lightsAdded = new Set();
 		const lightsDeleted = new Set();
 		for (const id of sceneLightIds) {
-			if (!baseLightIds.includes(id)) {
+			if (!baseLightIds?.includes(id)) {
 				lightsAdded.add(id);
 			}
 		}
 		for (const id of baseLightIds) {
-			if (!sceneLightIds.includes(id)) {
+			if (!sceneLightIds?.includes(id)) {
 				lightsDeleted.add(id);
 			}
 		}
@@ -216,13 +204,13 @@ export class Variant extends BaseVariant {
 		this.setFlag();
 	}
 
-	static override activateVariant(variant: Variant) {
+	static override async activateVariant(variant: Variant) {
 		const scene = variant.scene;
 		const baseVariant = variant.getBaseVariant();
 
 		// Clear the scene
-		scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
-		scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
+		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
+		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
 
 		// Populate the scene with variant data
 		if (!foundry.utils.isNewerVersion(game.version, 14)) {
@@ -239,14 +227,14 @@ export class Variant extends BaseVariant {
 			if (baseVariant.data.createWallData !== undefined) {
 				scene.createEmbeddedDocuments(
 					"Wall",
-					baseVariant.data?.createWallData.filter((x) => !variant.data?.deleteWallIds.includes(x._id)),
+					baseVariant.data?.createWallData.filter((x) => !variant.data?.deleteWallIds?.includes(x._id)),
 					{ keepId: true },
 				);
 			}
 			if (baseVariant.data.createLightData !== undefined) {
 				scene.createEmbeddedDocuments(
 					"AmbientLight",
-					baseVariant.data.createLightData.filter((x) => !variant.data?.deleteLightIds.includes(x._id)),
+					baseVariant.data.createLightData.filter((x) => !variant.data?.deleteLightIds?.includes(x._id)),
 					{ keepId: true },
 				);
 			}
