@@ -1,27 +1,17 @@
 import { MODULE_NAME } from "./constants.ts";
-import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
+import {
+	activateVariant,
+	addVariant,
+	addVariantPopup,
+	deleteVariant,
+	pickVariant,
+	updateActive,
+} from "./variant_opts.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
 		callback: async (li) => {
-			const sceneUuid = "Scene." + li.dataset.entryId;
-			const scene = fromUuidSync(sceneUuid) as Scene;
-			const variants = scene.getFlag(MODULE_NAME, "variants");
-			foundry.applications.api.DialogV2.wait({
-				window: { title: "Select Variant" },
-				buttons: (() => {
-					const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
-					for (const v of Object.values(variants)) {
-						const variantName = v.name;
-						buttons.push({
-							label: variantName,
-							action: variantName,
-							callback: () => activateVariant(scene, variantName),
-						});
-					}
-					return buttons;
-				})(),
-			});
+			pickVariant(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (e) => {
@@ -33,29 +23,16 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 
 Hooks.on("renderSceneConfig", (app) => {
 	app.options.actions.addVariant = async function () {
-		const { variantName } = await foundry.applications.api.DialogV2.input({
-			window: { title: "Create Variant" },
-			content: `
-			<div class="form-group">
-				<form>
-					<label>Name</label>
-					<div class="form-fields">
-						<input type="text" name="variantName" placeholder="Variant">
-					</div>
-				</form>
-			</div>
-			`,
-		});
-		addVariant(this.document, variantName as string);
+		await addVariantPopup(this.document);
 	};
 	app.options.actions.deleteVariant = async function (event) {
 		// @ts-expect-error
 		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
 		if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-			deleteVariant(this.document, variantName);
-		}
-		if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-			(this.document as Scene).setFlag(MODULE_NAME, "enabled", false);
+			await deleteVariant(this.document, variantName);
+			if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+				this.document.setFlag(MODULE_NAME, "enabled", false);
+			}
 		}
 	};
 	app.options.actions.activateVariant = async function (event) {
@@ -80,12 +57,55 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 	navEntries.forEach((entry) => {
 		// @ts-expect-error
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
-		const activateVariant = scene.getFlag(MODULE_NAME, "active");
-		const sceneEntry = entry.querySelector(".scene-name");
-		if (activateVariant !== undefined) {
-			sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${activateVariant}</span>`;
+		if (scene.getFlag(MODULE_NAME, "enabled")) {
+			const activateVariant = scene.getFlag(MODULE_NAME, "active");
+			const sceneEntry = entry.querySelector(".scene-name");
+			if (activateVariant !== undefined) {
+				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${activateVariant}</span>`;
+			}
 		}
 	});
+});
+
+Hooks.on("getSceneControlButtons", (controls) => {
+	console.log(controls);
+	controls.variants = {
+		name: "variants",
+		title: "Variants",
+		icon: "fa-solid fa-swatchbook",
+		order: Object.keys(controls).length,
+		visible: game.user.isGM && !!canvas.scene?.flags[MODULE_NAME].enabled,
+		activeTool: "",
+		tools: {
+			saveVariant: {
+				name: "saveVariant",
+				title: "Update Variant",
+				icon: "fa-solid fa-floppy-disk",
+				order: 0,
+				button: true,
+				visible: game.user.isGM,
+				onChange: () => updateActive(canvas.scene),
+			},
+			changeVariant: {
+				name: "changeVariant",
+				title: "Change Variant",
+				icon: "fa-duotone fa-swatchbook",
+				order: 1,
+				button: true,
+				visible: game.user.isGM,
+				onChange: () => pickVariant(canvas.scene),
+			},
+			addVariant: {
+				name: "addVariant",
+				title: "Change Variant",
+				icon: "fa-regular fa-square-plus",
+				order: 2,
+				button: true,
+				visible: game.user.isGM,
+				onChange: () => addVariantPopup(canvas.scene),
+			},
+		},
+	};
 });
 
 Hooks.once("init", () => {
