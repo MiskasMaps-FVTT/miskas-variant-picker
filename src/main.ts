@@ -76,13 +76,15 @@ Hooks.on("renderSceneConfig", (app) => {
 });
 
 Hooks.on("renderSceneNavigation", (_, e) => {
-	const navEntries = e.querySelectorAll(".scene");
+	const navEntries = e.querySelectorAll(`[data-action="viewScene"]`);
 	navEntries.forEach((entry) => {
 		// @ts-expect-error
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
 		const activateVariant = scene.getFlag(MODULE_NAME, "active");
 		const sceneEntry = entry.querySelector(".scene-name");
-		sceneEntry.innerHTML += activateVariant === undefined ? "" : ` / ${activateVariant}`;
+		if (activateVariant !== undefined) {
+			sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${activateVariant}</span>`;
+		}
 	});
 });
 
