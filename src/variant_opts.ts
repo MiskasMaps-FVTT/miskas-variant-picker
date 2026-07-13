@@ -19,21 +19,21 @@ export async function addVariantPopup(scene: Scene) {
 
 export function pickVariant(scene: Scene) {
 	const variants = scene.getFlag(MODULE_NAME, "variants");
-	foundry.applications.api.DialogV2.wait({
+	const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
+	for (const v of Object.values(variants)) {
+		const variantName = v.name;
+		buttons.push({
+			label: variantName,
+			action: variantName,
+			callback: () => {
+				activateVariant(scene, variantName);
+			},
+		});
+	}
+	new foundry.applications.api.DialogV2({
 		window: { title: "Select Variant" },
-		buttons: (() => {
-			const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
-			for (const v of Object.values(variants)) {
-				const variantName = v.name;
-				buttons.push({
-					label: variantName,
-					action: variantName,
-					callback: () => activateVariant(scene, variantName),
-				});
-			}
-			return buttons;
-		})(),
-	});
+		buttons: buttons,
+	}).render({ force: true });
 }
 
 export function addVariant(scene: Scene, variantName: string) {
@@ -169,12 +169,10 @@ export class BaseVariant implements VariantFlag {
 		// Clear the scene
 		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
 		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
-		// @ts-expect-error
-		await scene.deleteEmbeddedDocuments("AmbientLight", scene.levels.keys().toArray());
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			await scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
 			scene.background.src = variant.data.background;
 			scene.foreground = variant.data.foreground;
@@ -185,13 +183,8 @@ export class BaseVariant implements VariantFlag {
 		scene.createEmbeddedDocuments("AmbientLight", variant.data?.createLightData, { keepId: true });
 		if (game.settings.get("miskas-variant-picker", "showSuccess"))
 			ui.notifications.success("Variant changed successfully");
-		variant.scene.background.src = variant.data.background;
-		variant.scene.foreground = variant.data.foreground;
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
-
-		if (game.settings.get("miskas-variant-picker", "showSuccess"))
-			ui.notifications.success("Variant changed successfully");
 	}
 }
 
@@ -264,7 +257,7 @@ export class Variant extends BaseVariant {
 	}
 
 	static override async activateVariant(variant: Variant) {
-		BaseVariant.activateVariant(variant);
+		await BaseVariant.activateVariant(variant);
 
 		const scene = variant.scene;
 
@@ -298,8 +291,5 @@ export class Variant extends BaseVariant {
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
-
-		if (game.settings.get("miskas-variant-picker", "showSuccess"))
-			ui.notifications.success("Variant changed successfully");
 	}
 }
