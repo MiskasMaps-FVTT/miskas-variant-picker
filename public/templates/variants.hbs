@@ -15,7 +15,7 @@
         </legend>
         <ol class="variants plain flexcol">
 	         {{#if (not document.flags.miskas-variant-picker.enabled)}}
-                <p class="hint">Enable variants to modify variants</p>
+                <p class="hint">Variants not enabled on this scene</p>
             {{else}}
 	             {{#if (lt (objectLength document.flags.miskas-variant-picker.variants) 2)}}
                     <p class="hint">Variants allow you to have different wall and light configurations in one scene</p>
