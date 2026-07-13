@@ -18,6 +18,10 @@ export function setVariant(scene: Scene, variant: VariantFlag) {
 	});
 }
 
+export function updateActive(scene: Scene) {
+	getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update()
+}
+
 export function deleteVariant(scene: Scene, variantName: string) {
 	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
 }

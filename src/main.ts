@@ -1,6 +1,6 @@
 import { MODULE_NAME } from "./constants.ts";
 import { setVariantOption } from "./variant_building.ts";
-import { activateVariant, addVariant, deleteVariant } from "./variant_opts.ts";
+import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
 import { variantPicker } from "./variant_picker.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
@@ -57,6 +57,9 @@ Hooks.on("renderSceneConfig", (app) => {
 		// @ts-expect-error
 		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
 		activateVariant(this.document, variantName);
+	};
+	app.options.actions.updateVariant = async function () {
+		updateActive(this.document);
 	};
 });
 
