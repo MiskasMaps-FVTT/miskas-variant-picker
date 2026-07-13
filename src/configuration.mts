@@ -13,8 +13,9 @@ declare module "fvtt-types/configuration" {
 	interface FlagConfig {
 		Scene: {
 			"miskas-variant-picker": {
-				variants: { [key: string]: VariantFlag };
+				active: string;
 				enabled: boolean;
+				variants: { [key: string]: VariantFlag };
 				[variantName: `variants.${string}`]: VariantFlag;
 				regex: VariantRegEx; // @todo Remove after Variants2 is completed
 				"regex.scene": VariantRegEx["scene"]; // @todo Remove after Variants2 is completed
