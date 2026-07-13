@@ -1,13 +1,51 @@
 import { MODULE_NAME } from "./constants";
 
-export function addVariant(scene: Scene, variantName: string) {
-	return scene.setFlag(MODULE_NAME, "variants", {
-		[`${variantName}`]: { name: variantName, sceneUuid: scene.uuid, data: {} },
+export async function addVariantPopup(scene: Scene) {
+	const { variantName } = await foundry.applications.api.DialogV2.input({
+		window: { title: "Create Variant" },
+		content: `
+			<div class="form-group">
+				<form>
+					<label>Name</label>
+					<div class="form-fields">
+						<input type="text" name="variantName" placeholder="Variant">
+					</div>
+				</form>
+			</div>
+			`,
 	});
+	addVariant(scene, variantName as string);
+}
+
+export function pickVariant(scene: Scene) {
+	const variants = scene.getFlag(MODULE_NAME, "variants");
+	const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
+	for (const v of Object.values(variants)) {
+		const variantName = v.name;
+		buttons.push({
+			label: variantName,
+			action: variantName,
+			callback: () => {
+				activateVariant(scene, variantName);
+			},
+		});
+	}
+	new foundry.applications.api.DialogV2({
+		window: { title: "Select Variant" },
+		buttons: buttons,
+	}).render({ force: true });
+}
+
+export function addVariant(scene: Scene, variantName: string) {
+	if (scene.getFlag(MODULE_NAME, `variants.${variantName}`) === undefined) {
+		const variant = variantName == "Default" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
+		variant.update();
+		scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
+	}
 }
 
 export function activateVariant(scene: Scene, variantName: string) {
-	Variant.activateVariant(getVariantObject(scene, variantName));
+	return Variant.activateVariant(getVariantObject(scene, variantName));
 }
 
 export function setVariant(scene: Scene, variant: VariantFlag) {
@@ -19,10 +57,11 @@ export function setVariant(scene: Scene, variant: VariantFlag) {
 }
 
 export function updateActive(scene: Scene) {
-	getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update()
+	return getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update();
 }
 
 export function deleteVariant(scene: Scene, variantName: string) {
+	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Default");
 	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
 }
 
@@ -31,11 +70,12 @@ export function getVariant(scene: Scene, variantName: string) {
 }
 
 export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
-	const flags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
-	if (flags.name == "Base") {
-		return new BaseVariant(flags.sceneUuid, flags.data as BaseVariantData);
+	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
+	if (variantFlags === undefined) return undefined;
+	if (variantFlags?.name == "Default") {
+		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData);
 	} else {
-		return new Variant(flags.name, flags.sceneUuid, flags.data);
+		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data);
 	}
 }
 
@@ -47,14 +87,15 @@ type BaseVariantData = {
 	foreground: string;
 	createWallData: WallDocument.CreateData[];
 	createLightData: AmbientLightDocument.CreateData[];
+	levelsData: unknown[]; // Type not defined in League-of-Foundry-Developers/foundry-vtt-types yet
 };
 
 /**
  * Data stored in the variant
  */
 type VariantData = Partial<BaseVariantData> & {
-	deleteWallIds?: any[]; // Can't find the definite type of ids
-	deleteLightIds?: any[]; // Can't find the definite type of ids
+	deleteWallIds?: any[]; // Can't access the definite type of ids
+	deleteLightIds?: any[]; // Can't access the definite type of ids
 };
 
 /**
@@ -71,7 +112,7 @@ export interface VariantFlag {
  * Variant object to be used inside js
  */
 export class BaseVariant implements VariantFlag {
-	name: string = "Base";
+	name: string = "Default";
 	sceneUuid: string;
 	data: VariantData;
 	scene: Scene;
@@ -88,15 +129,11 @@ export class BaseVariant implements VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
-		this.data = data;
-	}
-
-	setFlag() {
-		setVariant(this.scene, this);
+		this.data = data ?? {};
 	}
 
 	getBaseVariant() {
-		const baseVariant = getVariantObject(this.scene, "Base");
+		const baseVariant = getVariantObject(this.scene, "Default");
 		if (baseVariant === undefined) {
 			ui.notifications.error(`Scene ${this.sceneUuid} doesn't have a base variant`);
 			throw new Error("no base variant");
@@ -104,9 +141,18 @@ export class BaseVariant implements VariantFlag {
 		return baseVariant;
 	}
 
+	setFlag() {
+		setVariant(this.scene, this);
+	}
+
 	update() {
-		this.data.background = this.scene.background.src;
-		this.data.foreground = this.scene.foreground;
+		if (foundry.utils.isNewerVersion(game.version, 14)) {
+			// @ts-expect-error
+			this.data.levelsData = this.scene.levels.values().toArray();
+		} else {
+			this.data.background = this.scene.background.src;
+			this.data.foreground = this.scene.foreground;
+		}
 		this.data.createWallData = this.scene.walls.values().toArray();
 		this.data.createLightData = this.scene.lights.values().toArray() as unknown as AmbientLightDocument.CreateData[];
 		this.setFlag();
@@ -119,29 +165,26 @@ export class BaseVariant implements VariantFlag {
 
 	static async activateVariant(variant: BaseVariant) {
 		const scene = variant.scene;
-		const baseVariant = variant.getBaseVariant();
 
 		// Clear the scene
 		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
 		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
 
-		if (!foundry.utils.isNewerVersion(game.version, 14)) {
-			variant.scene.background.src = variant.data.background;
-			variant.scene.foreground = variant.data.foreground;
-		} // @todo implement levels support
+		if (foundry.utils.isNewerVersion(game.version, 14)) {
+			// @ts-expect-error
+			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+		} else {
+			scene.background.src = variant.data.background;
+			scene.foreground = variant.data.foreground;
+		}
 
 		// Populate the scene with variant data
-		scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
-		scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
+		scene.createEmbeddedDocuments("Wall", variant.data?.createWallData, { keepId: true });
+		scene.createEmbeddedDocuments("AmbientLight", variant.data?.createLightData, { keepId: true });
 		if (game.settings.get("miskas-variant-picker", "showSuccess"))
 			ui.notifications.success("Variant changed successfully");
-		variant.scene.background.src = variant.data.background;
-		variant.scene.foreground = variant.data.foreground;
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
-
-		if (game.settings.get("miskas-variant-picker", "showSuccess"))
-			ui.notifications.success("Variant changed successfully");
 	}
 }
 
@@ -161,8 +204,13 @@ export class Variant extends BaseVariant {
 	override update() {
 		const baseVariant = this.getBaseVariant();
 
-		this.data.background = this.scene.background.src;
-		this.data.foreground = this.scene.foreground;
+		if (foundry.utils.isNewerVersion(game.version, 14)) {
+			// @ts-expect-error
+			this.data.levelsData = this.scene.levels.values().toArray();
+		} else {
+			this.data.background = this.scene.background.src;
+			this.data.foreground = this.scene.foreground;
+		}
 
 		// Update walls
 		const baseWallIds = (baseVariant.data?.createWallData?.map((x) => x._id) as string[]) ?? [];
@@ -209,50 +257,39 @@ export class Variant extends BaseVariant {
 	}
 
 	static override async activateVariant(variant: Variant) {
+		await BaseVariant.activateVariant(variant);
+
 		const scene = variant.scene;
-		const baseVariant = variant.getBaseVariant();
 
 		// Clear the scene
-		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
-		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
+		await scene.deleteEmbeddedDocuments("Wall", [], { deleteAll: true });
+		await scene.deleteEmbeddedDocuments("AmbientLight", [], { deleteAll: true });
 
-		// Populate the scene with variant data
-		if (!foundry.utils.isNewerVersion(game.version, 14)) {
+		if (foundry.utils.isNewerVersion(game.version, 14)) {
+			// @ts-expect-error
+			await scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+		} else {
 			variant.scene.background.src = variant.data.background;
 			variant.scene.foreground = variant.data.foreground;
-		} // @todo implement levels support
+		}
 
-		if (variant.name == "Base") {
-			scene.createEmbeddedDocuments("Wall", baseVariant.data?.createWallData, { keepId: true });
-			scene.createEmbeddedDocuments("AmbientLight", baseVariant.data?.createLightData, { keepId: true });
-		} else {
-			variant.data.background = variant.scene.background.src;
-			variant.data.foreground = variant.scene.foreground;
-			if (baseVariant.data.createWallData !== undefined) {
-				scene.createEmbeddedDocuments(
-					"Wall",
-					baseVariant.data?.createWallData.filter((x) => !variant.data?.deleteWallIds?.includes(x._id)),
-					{ keepId: true },
-				);
+		if (variant.name != "Default") {
+			// Delete
+			if (variant.data.createWallData !== undefined) {
+				scene.deleteEmbeddedDocuments("Wall", variant.data.deleteWallIds);
 			}
-			if (baseVariant.data.createLightData !== undefined) {
-				scene.createEmbeddedDocuments(
-					"AmbientLight",
-					baseVariant.data.createLightData.filter((x) => !variant.data?.deleteLightIds?.includes(x._id)),
-					{ keepId: true },
-				);
+			if (variant.data.deleteLightIds !== undefined) {
+				scene.deleteEmbeddedDocuments("AmbientLight", variant.data.deleteLightIds);
+			}
+			// Create
+			if (variant.data.createWallData !== undefined) {
+				scene.createEmbeddedDocuments("Wall", variant.data.createWallData, { keepId: true });
 			}
 			if (variant.data.createWallData !== undefined) {
-				scene.createEmbeddedDocuments("Wall", variant.data?.createWallData, { keepId: true });
-			}
-			if (variant.data.createWallData !== undefined) {
-				scene.createEmbeddedDocuments("AmbientLight", variant.data?.createLightData, { keepId: true });
+				scene.createEmbeddedDocuments("AmbientLight", variant.data.createLightData, { keepId: true });
 			}
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
-
-		if (game.settings.get("miskas-variant-picker", "showSuccess"))
-			ui.notifications.success("Variant changed successfully");
 	}
 }
