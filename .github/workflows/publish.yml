@@ -27,7 +27,7 @@ jobs:
         run: yarn build
       - name: Create zip archive
         working-directory: dist
-        run: zip -r ./module.zip module.json scripts/
+        run: zip -r ./module.zip module.json scripts/ templates/
       - name: Update release with files
         id: create_version_release
         uses: ncipollo/release-action@v1
