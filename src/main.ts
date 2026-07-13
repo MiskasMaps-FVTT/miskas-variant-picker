@@ -14,7 +14,6 @@ function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
 
 function registerUpdateHooks(value: boolean) {
 	if (value) {
-		updateActive(canvas.scene);
 		Object.values(foundry.canvas.placeables)
 			.filter((x) => typeof x == "function")
 			.forEach((x) => {
