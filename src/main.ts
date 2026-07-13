@@ -1,6 +1,6 @@
 import { MODULE_NAME } from "./constants.ts";
 import { setVariantOption } from "./variant_building.ts";
-import { addVariant, deleteVariant, activateVariant } from "./variant_opts.ts";
+import { activateVariant, addVariant, deleteVariant } from "./variant_opts.ts";
 import { variantPicker } from "./variant_picker.ts";
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
@@ -49,7 +49,9 @@ Hooks.on("renderSceneConfig", (app) => {
 	app.options.actions.deleteVariant = async function (event) {
 		// @ts-expect-error
 		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-		deleteVariant(this.document, variantName);
+		if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
+			deleteVariant(this.document, variantName);
+		}
 	};
 	app.options.actions.activateVariant = async function (event) {
 		// @ts-expect-error
