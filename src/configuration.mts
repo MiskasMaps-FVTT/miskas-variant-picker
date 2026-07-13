@@ -22,6 +22,6 @@ declare module "fvtt-types/configuration" {
 
 	interface SettingConfig {
 		"miskas-variant-picker.showSuccess": boolean;
-		"miskas-variant-picker.buildingMode": boolean;
+		"miskas-variant-picker.constantUpdate": boolean;
 	}
 }
