@@ -99,7 +99,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 		title: "Variants",
 		icon: "fa-solid fa-swatchbook",
 		order: Object.keys(controls).length,
-		visible: game.user.isGM && !!canvas.scene?.flags[MODULE_NAME].enabled,
+		visible: game.user.isGM,
 		activeTool: "saveVariant",
 		tools: {
 			saveVariant: {

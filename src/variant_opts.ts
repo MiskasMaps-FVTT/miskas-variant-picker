@@ -57,7 +57,7 @@ export function setVariant(scene: Scene, variant: VariantFlag) {
 }
 
 export function updateActive(scene: Scene) {
-	return getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active")).update();
+	return getVariantObject(scene, scene.getFlag("miskas-variant-picker", "active"))?.update();
 }
 
 export function deleteVariant(scene: Scene, variantName: string) {
