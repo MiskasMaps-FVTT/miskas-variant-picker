@@ -47,6 +47,7 @@ type ObjectTypes = {
 	light: AmbientLightDocument;
 	region: RegionDocument;
 	sound: AmbientSoundDocument;
+	tile: TileDocument;
 };
 const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
 const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
@@ -54,6 +55,7 @@ const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
 	light: "AmbientLight",
 	sound: "AmbientSound",
 	region: "Region",
+	tile: "Tile"
 };
 
 /**
