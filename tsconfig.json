@@ -17,7 +17,7 @@
 			"dom"
 		],
 		"moduleResolution": "bundler",
-		"allowJs": true,
+		"allowJs": false,
 		"strict": false,
 		"sourceMap": true,
 		"resolveJsonModule": true,
