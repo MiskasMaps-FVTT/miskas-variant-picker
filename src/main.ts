@@ -1,12 +1,7 @@
 import { MODULE_NAME } from "./constants.ts";
-import {
-	activateVariant,
-	addVariant,
-	addVariantPopup,
-	deleteVariant,
-	pickVariant,
-	updateActive,
-} from "./variant_opts.ts";
+import * as V from "./variant_opts.ts";
+import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
+import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
 function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
 	updateActive(doc.scene);
@@ -100,8 +95,15 @@ Hooks.on("getSceneControlButtons", (controls) => {
 		icon: "fa-solid fa-swatchbook",
 		order: Object.keys(controls).length,
 		visible: game.user.isGM,
-		activeTool: "saveVariant",
+		activeTool: "empty",
 		tools: {
+			empty: {
+				name: "empty",
+				title: "empty",
+				icon: "",
+				order: -1,
+				visible: false,
+			},
 			saveVariant: {
 				name: "saveVariant",
 				title: "Update Variant",
@@ -134,36 +136,15 @@ Hooks.on("getSceneControlButtons", (controls) => {
 				title: "Toggle Continuous Update",
 				icon: "fa-solid fa-repeat",
 				order: 3,
-				active: game.settings.settings.get(`${MODULE_NAME}.constantUpdate`).config,
 				toggle: true,
 				visible: game.user.isGM,
-				onChange: (_, value) => game.settings.set(MODULE_NAME, "constantUpdate", value),
+				onChange: (_, value) =>  registerUpdateHooks(value),
 			},
 		},
 	};
 });
 
 Hooks.once("init", () => {
-	game.settings.register(MODULE_NAME, "showSuccess", {
-		name: "Show Success Message",
-		hint: "Whether to show a success message when variant is changed",
-		scope: "user",
-		config: true,
-		type: Boolean,
-		default: false,
-	});
-	game.settings.register(MODULE_NAME, "constantUpdate", {
-		name: "Constant Variant Updates",
-		hint: "Update variant data on every change to the scene. May cause slow downs on scenes with many objects",
-		scope: "user",
-		config: true,
-		type: Boolean,
-		default: false,
-		onChange: registerUpdateHooks,
-	});
-
-	registerUpdateHooks(game.settings.settings.get(`${MODULE_NAME}.constantUpdate`).config);
-
 	foundry.applications.sheets.SceneConfig.PARTS.variants = {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
@@ -174,6 +155,9 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
+
+	// @ts-expect-error
+	CONFIG.V = V;
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);

@@ -1,41 +1,4 @@
 import { MODULE_NAME } from "./constants";
-
-export async function addVariantPopup(scene: Scene) {
-	const { variantName } = await foundry.applications.api.DialogV2.input({
-		window: { title: "Create Variant" },
-		content: `
-			<div class="form-group">
-				<form>
-					<label>Name</label>
-					<div class="form-fields">
-						<input type="text" name="variantName" placeholder="Variant">
-					</div>
-				</form>
-			</div>
-			`,
-	});
-	addVariant(scene, variantName as string);
-}
-
-export function pickVariant(scene: Scene) {
-	const variants = scene.getFlag(MODULE_NAME, "variants");
-	const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
-	for (const v of Object.values(variants)) {
-		const variantName = v.name;
-		buttons.push({
-			label: variantName,
-			action: variantName,
-			callback: () => {
-				activateVariant(scene, variantName);
-			},
-		});
-	}
-	new foundry.applications.api.DialogV2({
-		window: { title: "Select Variant" },
-		buttons: buttons,
-	}).render({ force: true });
-}
-
 export function addVariant(scene: Scene, variantName: string) {
 	if (scene.getFlag(MODULE_NAME, `variants.${variantName}`) === undefined) {
 		const variant = variantName == "Default" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
@@ -45,7 +8,7 @@ export function addVariant(scene: Scene, variantName: string) {
 }
 
 export function activateVariant(scene: Scene, variantName: string) {
-	return Variant.activateVariant(getVariantObject(scene, variantName));
+	getVariantObject(scene, variantName).activate();
 }
 
 export function setVariant(scene: Scene, variant: VariantFlag) {
@@ -79,23 +42,36 @@ export function getVariantObject(scene: Scene, variantName: string): Variant | B
 	}
 }
 
+type ObjectTypes = {
+	wall: WallDocument;
+	light: AmbientLightDocument;
+	region: RegionDocument;
+	sound: AmbientSoundDocument;
+};
+const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
+const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
+	wall: "Wall",
+	light: "AmbientLight",
+	sound: "AmbientSound",
+	region: "Region",
+};
+
 /**
  * Data stored in the variant
  */
 type BaseVariantData = {
 	background: string;
 	foreground: string;
-	createWallData: WallDocument.CreateData[];
-	createLightData: AmbientLightDocument.CreateData[];
 	levelsData: unknown[]; // Type not defined in League-of-Foundry-Developers/foundry-vtt-types yet
+} & {
+	[key in keyof ObjectTypes as `create${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
 
 /**
  * Data stored in the variant
  */
 type VariantData = Partial<BaseVariantData> & {
-	deleteWallIds?: any[]; // Can't access the definite type of ids
-	deleteLightIds?: any[]; // Can't access the definite type of ids
+	[key in keyof ObjectTypes as `delete${Capitalize<key>}Ids`]?: string[];
 };
 
 /**
@@ -153,22 +129,20 @@ export class BaseVariant implements VariantFlag {
 			this.data.background = this.scene.background.src;
 			this.data.foreground = this.scene.foreground;
 		}
-		this.data.createWallData = this.scene.walls.values().toArray();
-		this.data.createLightData = this.scene.lights.values().toArray() as unknown as AmbientLightDocument.CreateData[];
+
+		for (const kind of ObjectKeys) {
+			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any;
+		}
 		this.setFlag();
 	}
 
-	activate() {
+	async activate() {
 		// @ts-expect-error
-		this.constructor.activateVariant(this);
+		await this.constructor.activateVariant(this);
 	}
 
 	static async activateVariant(variant: BaseVariant) {
 		const scene = variant.scene;
-
-		// Clear the scene
-		await scene.deleteEmbeddedDocuments("Wall", scene.walls.keys().toArray());
-		await scene.deleteEmbeddedDocuments("AmbientLight", scene.lights.keys().toArray());
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
@@ -179,10 +153,12 @@ export class BaseVariant implements VariantFlag {
 		}
 
 		// Populate the scene with variant data
-		scene.createEmbeddedDocuments("Wall", variant.data?.createWallData, { keepId: true });
-		scene.createEmbeddedDocuments("AmbientLight", variant.data?.createLightData, { keepId: true });
-		if (game.settings.get("miskas-variant-picker", "showSuccess"))
-			ui.notifications.success("Variant changed successfully");
+		for (const kind of ObjectKeys) {
+			await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], scene[`${kind}s`].keys().toArray());
+			await scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+				keepId: true,
+			});
+		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
 	}
@@ -198,7 +174,7 @@ export class Variant extends BaseVariant {
 			super(sceneOrUuid);
 		}
 		this.name = variantName;
-		this.data = data;
+		this.data = data ?? {};
 	}
 
 	override update() {
@@ -212,81 +188,53 @@ export class Variant extends BaseVariant {
 			this.data.foreground = this.scene.foreground;
 		}
 
-		// Update walls
-		const baseWallIds = (baseVariant.data?.createWallData?.map((x) => x._id) as string[]) ?? [];
-		const sceneWallIds = [...this.scene.walls.keys()];
-		const wallsAdded = new Set();
-		const wallsDeleted = new Set();
-		for (const id of sceneWallIds) {
-			if (!baseWallIds?.includes(id)) {
-				wallsAdded.add(id);
+		for (const kind of ObjectKeys) {
+			const baseIds = (baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) as string[]) ?? [];
+			const sceneIds = [...this.scene[`${kind}s`].keys()];
+			const added = new Set<string>();
+			const deleted = new Set<string>();
+			for (const id of sceneIds) {
+				if (!baseIds?.includes(id)) {
+					added.add(id);
+				}
 			}
-		}
-		for (const id of baseWallIds) {
-			if (!sceneWallIds?.includes(id)) {
-				wallsDeleted.add(id);
+			for (const id of baseIds) {
+				if (!sceneIds?.includes(id)) {
+					deleted.add(id);
+				}
 			}
+			this.data[`delete${kind.capitalize()}Ids`] = [...deleted];
+			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`]
+				.values()
+				// @ts-expect-error
+				.filter((x) => added.has(x._id))
+				.toArray();
 		}
-		this.data.deleteWallIds = [...wallsDeleted];
-		this.data.createWallData = this.scene.walls
-			.values()
-			.filter((x) => wallsAdded.has(x._id))
-			.toArray();
-
-		// Update lights
-		const baseLightIds = (baseVariant.data?.createLightData?.map((x) => x._id) as string[]) ?? [];
-		const sceneLightIds = [...this.scene.lights.keys()];
-		const lightsAdded = new Set();
-		const lightsDeleted = new Set();
-		for (const id of sceneLightIds) {
-			if (!baseLightIds?.includes(id)) {
-				lightsAdded.add(id);
-			}
-		}
-		for (const id of baseLightIds) {
-			if (!sceneLightIds?.includes(id)) {
-				lightsDeleted.add(id);
-			}
-		}
-		this.data.deleteLightIds = [...lightsDeleted];
-		this.data.createLightData = this.scene.lights
-			.values()
-			.filter((x) => lightsAdded.has(x._id))
-			.toArray() as unknown as AmbientLightDocument.CreateData[];
 		this.setFlag();
 	}
 
 	static override async activateVariant(variant: Variant) {
-		await BaseVariant.activateVariant(variant);
+		await variant.getBaseVariant().activate();
 
 		const scene = variant.scene;
-
-		// Clear the scene
-		await scene.deleteEmbeddedDocuments("Wall", [], { deleteAll: true });
-		await scene.deleteEmbeddedDocuments("AmbientLight", [], { deleteAll: true });
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
 			await scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
-			variant.scene.background.src = variant.data.background;
-			variant.scene.foreground = variant.data.foreground;
+			scene.background.src = variant.data.background;
+			scene.foreground = variant.data.foreground;
 		}
 
 		if (variant.name != "Default") {
-			// Delete
-			if (variant.data.createWallData !== undefined) {
-				scene.deleteEmbeddedDocuments("Wall", variant.data.deleteWallIds);
-			}
-			if (variant.data.deleteLightIds !== undefined) {
-				scene.deleteEmbeddedDocuments("AmbientLight", variant.data.deleteLightIds);
-			}
-			// Create
-			if (variant.data.createWallData !== undefined) {
-				scene.createEmbeddedDocuments("Wall", variant.data.createWallData, { keepId: true });
-			}
-			if (variant.data.createWallData !== undefined) {
-				scene.createEmbeddedDocuments("AmbientLight", variant.data.createLightData, { keepId: true });
+			for (const kind of ObjectKeys) {
+				console.log(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`], scene[`${kind}s`])
+				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
+				scene.createEmbeddedDocuments(
+					EmbeddedKeys[kind],
+					variant.data[`create${kind.capitalize()}Data`] as any[],
+					{ keepId: true },
+				);
 			}
 		}
 
