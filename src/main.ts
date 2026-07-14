@@ -64,9 +64,7 @@ Hooks.on("renderSceneConfig", (app) => {
 	app.options.actions.updateVariant = async function () {
 		updateActive(this.document);
 	};
-	app.options.actions.toggleVariants = function () {
-		const enabled = this.document.getFlag(MODULE_NAME, "enabled");
-		this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+	app.options.actions.toggleVariants = function () { const enabled = this.document.getFlag(MODULE_NAME, "enabled"); this.document.setFlag(MODULE_NAME, "enabled", !enabled);
 		if (!enabled) {
 			addVariant(this.document, "Default");
 		}
