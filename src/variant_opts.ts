@@ -154,8 +154,10 @@ export class BaseVariant implements VariantFlag {
 			// @ts-expect-error
 			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
-			scene.background.src = variant.data.background;
-			scene.foreground = variant.data.foreground;
+			scene.update({
+				background: { src: variant.data.background },
+				foreground: variant.data.foreground,
+			});
 		}
 
 		// Populate the scene with variant data
@@ -228,8 +230,10 @@ export class Variant extends BaseVariant {
 			// @ts-expect-error
 			await scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
-			scene.background.src = variant.data.background;
-			scene.foreground = variant.data.foreground;
+			scene.update({
+				background: { src: variant.data.background },
+				foreground: variant.data.foreground,
+			});
 		}
 
 		if (variant.name != "Default") {
