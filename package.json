@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"name": "miskas-variant-picker",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "Change variants of maps easily through the scene context menu",
 	"license": "BSD-3",
 	"type": "module",
