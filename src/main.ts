@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./constants.ts";
-import * as V from "./variant_opts.ts";
+import { migrateVariants } from "./variant_migrator.ts";
 import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
 import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
@@ -37,6 +37,16 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (e) => {
 			return game.user.isGM && (fromUuidSync("Scene." + e.dataset.entryId) as Scene).getFlag(MODULE_NAME, "enabled");
+		}, // Key deprecated since V14, use visible instead
+		name: "Change Scene Variant", // Key deprecated since V14, use label instead
+	});
+	menuItems.push({
+		callback: async (li) => {
+			pickVariant(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
+		}, // Key deprecated since V14, use onClick instead
+		icon: `<i class="fa-solid fa-swatchbook"></i>`,
+		condition: () => {
+			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption");
 		}, // Key deprecated since V14, use visible instead
 		name: "Change Scene Variant", // Key deprecated since V14, use label instead
 	});
@@ -157,6 +167,14 @@ Hooks.once("init", () => {
 		id: "variants",
 		icon: "fa-solid fa-shapes",
 		label: "Variants",
+	});
+
+	game.settings.register(MODULE_NAME, "hideVariantMigrationOption", {
+		name: "Hide Variant Migration Option",
+		hint: "Hide Variants 2 migration option from scene context menu",
+		config: true,
+		default: false,
+		type: Boolean,
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
