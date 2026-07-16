@@ -42,13 +42,13 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	});
 	menuItems.push({
 		callback: async (li) => {
-			pickVariant(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
+			migrateVariants(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
 		}, // Key deprecated since V14, use onClick instead
-		icon: `<i class="fa-solid fa-swatchbook"></i>`,
+		icon: `<i class="fa-solid fa-arrow-rotate-right"></i>`,
 		condition: () => {
 			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption");
 		}, // Key deprecated since V14, use visible instead
-		name: "Change Scene Variant", // Key deprecated since V14, use label instead
+		name: "Migrate to Variants 2", // Key deprecated since V14, use label instead
 	});
 });
 
