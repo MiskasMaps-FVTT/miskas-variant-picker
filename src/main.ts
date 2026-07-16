@@ -132,7 +132,7 @@ Hooks.once("init", () => {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
 
-	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS, {
+	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.actions, {
 		addVariant: async function () {
 			await addVariantPopup(this.document);
 		},
