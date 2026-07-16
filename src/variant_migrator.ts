@@ -77,7 +77,6 @@ export async function migrateVariants(scene: Scene) {
 					},
 				};
 			});
-			console.log(buttons);
 			await foundry.applications.api.DialogV2.wait({
 				window: { title: "Select Default Variant" },
 				content: "<p>Please select the default variant</p>",
