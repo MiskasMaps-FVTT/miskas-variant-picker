@@ -3,7 +3,7 @@ import type { VariantFlag } from "./variant_opts";
 
 declare module "fvtt-types/configuration" {
 	interface AssumeHookRan {
-		ready: true;
+		init: true;
 	}
 
 	interface ModuleConfig {
@@ -17,18 +17,39 @@ declare module "fvtt-types/configuration" {
 				enabled: boolean;
 				variants: { [key: string]: VariantFlag };
 				[variantName: `variants.${string}`]: VariantFlag;
-				regex: VariantRegEx; // @todo Remove after Variants2 is completed
-				"regex.scene": VariantRegEx["scene"]; // @todo Remove after Variants2 is completed
-				"regex.variant": VariantRegEx["variant"]; // @todo Remove after Variants2 is completed
-				filter: VariantFilter; // @todo Remove after Variants2 is completed
-				"filter.remove": VariantFilter["remove"]; // @todo Remove after Variants2 is completed
-				"filter.contains": VariantFilter["contains"]; // @todo Remove after Variants2 is completed
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				regex: VariantRegEx;
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				"regex.scene": VariantRegEx["scene"];
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				"regex.variant": VariantRegEx["variant"];
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				filter: VariantFilter;
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				"filter.remove": VariantFilter["remove"];
+				/**
+					@deprecated Since version 2.0.0
+				*/
+				"filter.contains": VariantFilter["contains"];
+				/**
+					@deprecated Since version 2.0.0
+				*/
 				prefix: string; // @todo Remove after Variants2 is completed
 			};
 		};
 	}
 
 	interface SettingConfig {
-		"miskas-variant-picker.constantUpdate": boolean;
+		"miskas-variant-picker.hideVariantMigrationOption": boolean;
 	}
 }
