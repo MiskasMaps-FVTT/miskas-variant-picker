@@ -234,7 +234,6 @@ export class Variant extends BaseVariant {
 
 		if (variant.name != "Default") {
 			for (const kind of ObjectKeys) {
-				console.log(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`], scene[`${kind}s`]);
 				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
 				scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
 					keepId: true,
