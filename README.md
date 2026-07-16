@@ -12,3 +12,6 @@ Each modification to a scene must be manually saved from the scene config or the
 Each scene that uses variants has a single variant named "_Default_". This variant acts as the base for all other variants and changes to this variant are applied to all other variants. This allows you to build the base scene first, and apply minor changes as needed to all the variants.
 
 Currently, variants allow you to have distinct walls, lights, sounds, tiles, regions, and backgrounds for each variant. V14 levels support also exists, but all variants have the same levels. Each variant can have different level configurations, but not additional or removed levels.
+
+## Removal of old variants system
+The old variant system has been removed, but you can migrate old variants into the new system through a context menu option in the scene. This can be hidden in the module settings. 
