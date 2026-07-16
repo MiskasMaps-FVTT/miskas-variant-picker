@@ -191,7 +191,7 @@ export class Variant extends BaseVariant {
 		}
 
 		for (const kind of ObjectKeys) {
-			const baseIds = (baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) as string[]) ?? [];
+			const baseIds = (baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id)) ?? [];
 			const sceneIds = [...this.scene[`${kind}s`].keys()];
 			const added = new Set<string>();
 			const deleted = new Set<string>();

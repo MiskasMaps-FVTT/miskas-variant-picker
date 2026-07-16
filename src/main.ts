@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./constants.ts";
-import * as V from "./variant_opts.ts";
+import { migrateVariants } from "./variant_migrator.ts";
 import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
 import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
@@ -40,35 +40,20 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		}, // Key deprecated since V14, use visible instead
 		name: "Change Scene Variant", // Key deprecated since V14, use label instead
 	});
+	menuItems.push({
+		callback: async (li) => {
+			pickVariant(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
+		}, // Key deprecated since V14, use onClick instead
+		icon: `<i class="fa-solid fa-swatchbook"></i>`,
+		condition: () => {
+			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption");
+		}, // Key deprecated since V14, use visible instead
+		name: "Change Scene Variant", // Key deprecated since V14, use label instead
+	});
 });
 
 Hooks.on("renderSceneConfig", (app) => {
-	app.options.actions.addVariant = async function () {
-		await addVariantPopup(this.document);
-	};
-	app.options.actions.deleteVariant = async function (event) {
-		// @ts-expect-error
-		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-		if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-			await deleteVariant(this.document, variantName);
-			if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-				this.document.setFlag(MODULE_NAME, "enabled", false);
-			}
-		}
-	};
-	app.options.actions.activateVariant = async function (event) {
-		// @ts-expect-error
-		const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-		activateVariant(this.document, variantName);
-	};
-	app.options.actions.updateVariant = async function () {
-		updateActive(this.document);
-	};
-	app.options.actions.toggleVariants = function () { const enabled = this.document.getFlag(MODULE_NAME, "enabled"); this.document.setFlag(MODULE_NAME, "enabled", !enabled);
-		if (!enabled) {
-			addVariant(this.document, "Default");
-		}
-	};
+	(app.position.width as number) += 85;
 });
 
 Hooks.on("renderSceneNavigation", (_, e) => {
@@ -136,7 +121,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 				order: 3,
 				toggle: true,
 				visible: game.user.isGM,
-				onChange: (_, value) =>  registerUpdateHooks(value),
+				onChange: (_, value) => registerUpdateHooks(value),
 			},
 		},
 	};
@@ -146,16 +131,53 @@ Hooks.once("init", () => {
 	foundry.applications.sheets.SceneConfig.PARTS.variants = {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
+
+	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS, {
+		addVariant: async function () {
+			await addVariantPopup(this.document);
+		},
+		deleteVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
+				await deleteVariant(this.document, variantName);
+				if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+					this.document.setFlag(MODULE_NAME, "enabled", false);
+				}
+			}
+		},
+		activateVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			activateVariant(this.document, variantName);
+		},
+		updateVariant: async function () {
+			updateActive(this.document);
+		},
+		toggleVariants: function () {
+			const enabled = this.document.getFlag(MODULE_NAME, "enabled");
+			this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+			if (!enabled) {
+				addVariant(this.document, "Default");
+			}
+		},
+	});
+
 	foundry.applications.sheets.SceneConfig.TABS.sheet.tabs.push({
 		id: "variants",
 		icon: "fa-solid fa-shapes",
 		label: "Variants",
 	});
 
-	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
+	game.settings.register(MODULE_NAME, "hideVariantMigrationOption", {
+		name: "Hide Variant Migration Option",
+		hint: "Hide Variants 2 migration option from scene context menu",
+		config: true,
+		default: false,
+		type: Boolean,
+	});
 
-	// @ts-expect-error
-	CONFIG.V = V;
+	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
