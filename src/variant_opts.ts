@@ -24,6 +24,10 @@ export function updateActive(scene: Scene) {
 }
 
 export function deleteVariant(scene: Scene, variantName: string) {
+	if (variantName == "Default" && Object.keys(scene.getFlag(MODULE_NAME, "variants")).length > 1) {
+		ui.notifications.error("Can't delete the Default variant when there are other variants!");
+		return false;
+	}
 	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Default");
 	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
 }
@@ -55,7 +59,7 @@ const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
 	light: "AmbientLight",
 	sound: "AmbientSound",
 	region: "Region",
-	tile: "Tile"
+	tile: "Tile",
 };
 
 /**
@@ -191,7 +195,7 @@ export class Variant extends BaseVariant {
 		}
 
 		for (const kind of ObjectKeys) {
-			const baseIds = (baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id)) ?? [];
+			const baseIds = baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) ?? [];
 			const sceneIds = [...this.scene[`${kind}s`].keys()];
 			const added = new Set<string>();
 			const deleted = new Set<string>();
@@ -230,13 +234,11 @@ export class Variant extends BaseVariant {
 
 		if (variant.name != "Default") {
 			for (const kind of ObjectKeys) {
-				console.log(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`], scene[`${kind}s`])
+				console.log(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`], scene[`${kind}s`]);
 				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
-				scene.createEmbeddedDocuments(
-					EmbeddedKeys[kind],
-					variant.data[`create${kind.capitalize()}Data`] as any[],
-					{ keepId: true },
-				);
+				scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+					keepId: true,
+				});
 			}
 		}
 
