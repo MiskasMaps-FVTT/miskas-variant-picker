@@ -1,6 +1,7 @@
 import { MODULE_NAME } from "./constants.ts";
+import { VariantConfig } from "./variant_edit.ts";
 import { migrateVariants } from "./variant_migrator.ts";
-import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
+import { activateVariant, addVariant, deleteVariant, getVariantObject, updateActive } from "./variant_opts.ts";
 import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
 function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
@@ -160,6 +161,12 @@ Hooks.once("init", () => {
 			if (!enabled) {
 				addVariant(this.document, "Default");
 			}
+		},
+		editVariant: function (event: Event) {
+			new VariantConfig({
+				// @ts-expect-error
+				variant: getVariantObject(this.document, event.target.closest("[data-variant-name]").dataset.variantName),
+			}).render({force: true});
 		},
 	});
 

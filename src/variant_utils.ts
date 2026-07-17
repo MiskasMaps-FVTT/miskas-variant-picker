@@ -1,5 +1,5 @@
 import { MODULE_NAME } from "./constants";
-import { addVariant, activateVariant } from "./variant_opts";
+import { activateVariant, addVariant } from "./variant_opts";
 
 export async function addVariantPopup(scene: Scene) {
 	const { variantName } = await foundry.applications.api.DialogV2.input({
@@ -36,4 +36,3 @@ export function pickVariant(scene: Scene) {
 		buttons: buttons,
 	}).render({ force: true });
 }
-

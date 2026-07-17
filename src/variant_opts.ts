@@ -26,7 +26,7 @@ export function updateActive(scene: Scene) {
 export function deleteVariant(scene: Scene, variantName: string) {
 	if (variantName == "Default" && Object.keys(scene.getFlag(MODULE_NAME, "variants")).length > 1) {
 		ui.notifications.error("Can't delete the Default variant when there are other variants!");
-		return false;
+		return Promise.reject();
 	}
 	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Default");
 	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
@@ -46,14 +46,14 @@ export function getVariantObject(scene: Scene, variantName: string): Variant | B
 	}
 }
 
-type ObjectTypes = {
+export type ObjectTypes = {
 	wall: WallDocument;
 	light: AmbientLightDocument;
 	region: RegionDocument;
 	sound: AmbientSoundDocument;
 	tile: TileDocument;
 };
-const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
+export const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
 const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
 	wall: "Wall",
 	light: "AmbientLight",
@@ -137,7 +137,8 @@ export class BaseVariant implements VariantFlag {
 		}
 
 		for (const kind of ObjectKeys) {
-			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any;
+			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any[];
+			this.data[`delete${kind.capitalize()}Ids`] = [] as any[];
 		}
 		this.setFlag();
 	}
