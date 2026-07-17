@@ -53,10 +53,6 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	});
 });
 
-Hooks.on("renderSceneConfig", (app) => {
-	(app.position.width as number) += 85;
-});
-
 Hooks.on("renderSceneNavigation", (_, e) => {
 	const navEntries = e.querySelectorAll(`[data-action="viewScene"]`);
 	navEntries.forEach((entry) => {
@@ -133,40 +129,48 @@ Hooks.once("init", () => {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
 
-	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.actions, {
-		addVariant: async function () {
-			await addVariantPopup(this.document);
+	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS, {
+		position: {
+			width: (foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.position.width as number) + 85,
 		},
-		deleteVariant: async function (event: Event) {
-			// @ts-expect-error
-			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-			if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-				await deleteVariant(this.document, variantName);
-				if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-					this.document.setFlag(MODULE_NAME, "enabled", false);
-				}
-			}
-		},
-		activateVariant: async function (event: Event) {
-			// @ts-expect-error
-			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-			activateVariant(this.document, variantName);
-		},
-		updateVariant: async function () {
-			updateActive(this.document);
-		},
-		toggleVariants: function () {
-			const enabled = this.document.getFlag(MODULE_NAME, "enabled");
-			this.document.setFlag(MODULE_NAME, "enabled", !enabled);
-			if (!enabled) {
-				addVariant(this.document, "Default");
-			}
-		},
-		editVariant: function (event: Event) {
-			new VariantConfig({
+		actions: {
+			addVariant: async function () {
+				await addVariantPopup(this.document);
+			},
+			deleteVariant: async function (event: Event) {
 				// @ts-expect-error
-				variant: getVariantObject(this.document, event.target.closest("[data-variant-name]").dataset.variantName),
-			}).render({force: true});
+				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+				if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
+					await deleteVariant(this.document, variantName);
+					if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+						this.document.setFlag(MODULE_NAME, "enabled", false);
+					}
+				}
+			},
+			activateVariant: async function (event: Event) {
+				// @ts-expect-error
+				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+				activateVariant(this.document, variantName);
+			},
+			updateVariant: async function () {
+				updateActive(this.document);
+			},
+			toggleVariants: function () {
+				const enabled = this.document.getFlag(MODULE_NAME, "enabled");
+				this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+				if (!enabled) {
+					addVariant(this.document, "Default");
+				}
+			},
+			editVariant: function (event: Event) {
+				const variant = getVariantObject(
+					this.document,
+					// @ts-expect-error
+					event.target.closest("[data-variant-name]").dataset.variantName,
+				);
+				console.log(variant);
+				new VariantConfig({ variant }).render({ force: true });
+			},
 		},
 	});
 
@@ -185,6 +189,7 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
+	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
