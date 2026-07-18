@@ -68,6 +68,10 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 	});
 });
 
+Hooks.on("renderSceneConfig", (...args) => {
+	(args[3].position.width as number) += 85;
+});
+
 Hooks.on("getSceneControlButtons", (controls) => {
 	controls.variants = {
 		name: "variants",
@@ -129,48 +133,43 @@ Hooks.once("init", () => {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
 
-	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS, {
-		position: {
-			width: (foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.position.width as number) + 85,
+	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.actions, {
+		addVariant: async function () {
+			await addVariantPopup(this.document);
 		},
-		actions: {
-			addVariant: async function () {
-				await addVariantPopup(this.document);
-			},
-			deleteVariant: async function (event: Event) {
-				// @ts-expect-error
-				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-				if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-					await deleteVariant(this.document, variantName);
-					if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-						this.document.setFlag(MODULE_NAME, "enabled", false);
-					}
+		deleteVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
+				await deleteVariant(this.document, variantName);
+				if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+					this.document.setFlag(MODULE_NAME, "enabled", false);
 				}
-			},
-			activateVariant: async function (event: Event) {
+			}
+		},
+		activateVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			activateVariant(this.document, variantName);
+		},
+		updateVariant: async function () {
+			updateActive(this.document);
+		},
+		toggleVariants: function () {
+			const enabled = this.document.getFlag(MODULE_NAME, "enabled");
+			this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+			if (!enabled) {
+				addVariant(this.document, "Default");
+			}
+		},
+		editVariant: function (event: Event) {
+			const variant = getVariantObject(
+				this.document,
 				// @ts-expect-error
-				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-				activateVariant(this.document, variantName);
-			},
-			updateVariant: async function () {
-				updateActive(this.document);
-			},
-			toggleVariants: function () {
-				const enabled = this.document.getFlag(MODULE_NAME, "enabled");
-				this.document.setFlag(MODULE_NAME, "enabled", !enabled);
-				if (!enabled) {
-					addVariant(this.document, "Default");
-				}
-			},
-			editVariant: function (event: Event) {
-				const variant = getVariantObject(
-					this.document,
-					// @ts-expect-error
-					event.target.closest("[data-variant-name]").dataset.variantName,
-				);
-				console.log(variant);
-				new VariantConfig({ variant }).render({ force: true });
-			},
+				event.target.closest("[data-variant-name]").dataset.variantName,
+			);
+			console.log(variant);
+			new VariantConfig({ variant }).render({ force: true });
 		},
 	});
 
