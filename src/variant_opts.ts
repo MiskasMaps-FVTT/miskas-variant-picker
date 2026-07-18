@@ -159,15 +159,14 @@ export class BaseVariant implements VariantFlag {
 		for (const kind of ObjectKeys) {
 			deletePromises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], [], { deleteAll: true }));
 		}
-		Promise.all(deletePromises).then(() => {
-			for (const kind of ObjectKeys) {
-				createPromises.push(
-					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
-						keepId: true,
-					}),
-				);
-			}
-		});
+		await Promise.all(deletePromises);
+		for (const kind of ObjectKeys) {
+			createPromises.push(
+				scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+					keepId: true,
+				}),
+			);
+		}
 		await Promise.all(createPromises);
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
@@ -277,18 +276,18 @@ export class Variant extends BaseVariant {
 			const deletePromises = [] as Promise<any>[];
 			const createPromises = [] as Promise<any>[];
 			for (const kind of ObjectKeys) {
-				console.log(`deleting ${kind}s`);
-				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
+				deletePromises.push(
+					scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]),
+				);
 			}
-			Promise.all(deletePromises).then(() => {
-				for (const kind of ObjectKeys) {
-					createPromises.push(
-						scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
-							keepId: true,
-						}),
-					);
-				}
-			});
+			await Promise.all(deletePromises);
+			for (const kind of ObjectKeys) {
+				createPromises.push(
+					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+						keepId: true,
+					}),
+				);
+			}
 			await Promise.all(createPromises);
 		}
 
