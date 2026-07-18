@@ -239,7 +239,6 @@ export class Variant extends BaseVariant {
 
 	override activate() {
 		// Validate variant data and correct them
-		console.log("validating");
 		for (const kind of ObjectKeys) {
 			const baseVariant = this.getBaseVariant();
 			const ids = new Set(
@@ -250,8 +249,6 @@ export class Variant extends BaseVariant {
 			);
 			const deleteIds = this.data[`delete${kind.capitalize()}Ids`];
 			const existingIds = deleteIds.filter((x) => ids.has(x));
-			console.log(`original length: ${deleteIds.length}`);
-			console.log(`new length: ${existingIds.length}`);
 			this.data[`delete${kind.capitalize()}Ids`] = existingIds;
 			this.setFlag();
 		}
