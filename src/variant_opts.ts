@@ -20,8 +20,8 @@ export function setVariant(scene: Scene, variant: VariantFlag) {
 }
 
 export function updateActive(scene: Scene) {
-	const active = scene.getFlag("miskas-variant-picker", "active")
-	ui.notifications.success(`Updated "${active}"`)
+	const active = scene.getFlag("miskas-variant-picker", "active");
+	ui.notifications.success(`Updated "${active}"`);
 	return getVariantObject(scene, active)?.update();
 }
 
@@ -201,7 +201,7 @@ export class Variant extends BaseVariant {
 		const baseVariant = this.getBaseVariant();
 		if (this.name == "Default") {
 			baseVariant.update();
-			return
+			return;
 		}
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
@@ -213,17 +213,17 @@ export class Variant extends BaseVariant {
 		}
 
 		for (const kind of ObjectKeys) {
-			const baseIds = baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) ?? [];
-			const sceneIds = [...this.scene[`${kind}s`].keys()];
+			const baseIds = new Set(baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) ?? []);
+			const sceneIds = new Set([...this.scene[`${kind}s`].keys()]);
 			const added = new Set<string>();
 			const deleted = new Set<string>();
 			for (const id of sceneIds) {
-				if (!baseIds?.includes(id)) {
+				if (!baseIds?.has(id)) {
 					added.add(id);
 				}
 			}
 			for (const id of baseIds) {
-				if (!sceneIds?.includes(id)) {
+				if (!sceneIds?.has(id)) {
 					deleted.add(id);
 				}
 			}
@@ -237,7 +237,31 @@ export class Variant extends BaseVariant {
 		this.setFlag();
 	}
 
+	override activate() {
+		// Validate variant data and correct them
+		console.log("validating");
+		for (const kind of ObjectKeys) {
+			const baseVariant = this.getBaseVariant();
+			const ids = new Set(
+				baseVariant.data[`create${kind.capitalize()}Data`]
+					.values()
+					.map((x) => x._id)
+					.toArray(),
+			);
+			const deleteIds = this.data[`delete${kind.capitalize()}Ids`];
+			const existingIds = deleteIds.filter((x) => ids.has(x));
+			console.log(`original length: ${deleteIds.length}`);
+			console.log(`new length: ${existingIds.length}`);
+			this.data[`delete${kind.capitalize()}Ids`] = existingIds;
+			this.setFlag();
+		}
+
+		// @ts-expect-error
+		return this.constructor.activateVariant(this);
+	}
+
 	static override async activateVariant(variant: Variant) {
+		// Load base data
 		await variant.getBaseVariant().activate();
 
 		const scene = variant.scene;
@@ -256,6 +280,7 @@ export class Variant extends BaseVariant {
 			const deletePromises = [] as Promise<any>[];
 			const createPromises = [] as Promise<any>[];
 			for (const kind of ObjectKeys) {
+				console.log(`deleting ${kind}s`);
 				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
 			}
 			Promise.all(deletePromises).then(() => {

@@ -8,25 +8,26 @@ function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
 	updateActive(doc.scene);
 }
 
+const updateHookIds = new Map<string, number>();
+
 function registerUpdateHooks(value: boolean) {
 	if (value) {
 		Object.values(foundry.canvas.placeables)
 			.filter((x) => typeof x == "function")
 			.forEach((x) => {
 				// @ts-expect-error
-				Hooks.on(`draw${x.name}`, updateParent);
+				updateHookIds.set(`draw${x.name}`, Hooks.on(`draw${x.name}`, updateParent));
 				// @ts-expect-error
-				Hooks.on(`destroy${x.name}`, updateParent);
+				updateHookIds.set(`destroy${x.name}`, Hooks.on(`destroy${x.name}`, updateParent));
 			});
 	} else {
-		Object.values(foundry.canvas.placeables)
-			.filter((x) => typeof x == "function")
-			.forEach((x) => {
-				// @ts-expect-error
-				Hooks.off(`draw${x.name}`, updateParent);
-				// @ts-expect-error
-				Hooks.off(`destroy${x.name}`, updateParent);
-			});
+		for (const item of updateHookIds) {
+			const hook = item[0];
+			const id = item[1];
+			// @ts-expect-error
+			Hooks.off(hook, id);
+		}
+		updateHookIds.clear();
 	}
 }
 
