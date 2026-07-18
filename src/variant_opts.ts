@@ -26,7 +26,7 @@ export function updateActive(scene: Scene) {
 export function deleteVariant(scene: Scene, variantName: string) {
 	if (variantName == "Default" && Object.keys(scene.getFlag(MODULE_NAME, "variants")).length > 1) {
 		ui.notifications.error("Can't delete the Default variant when there are other variants!");
-		return false;
+		return Promise.reject();
 	}
 	if (variantName == scene.getFlag(MODULE_NAME, "active")) scene.setFlag(MODULE_NAME, "active", "Default");
 	return scene.unsetFlag(MODULE_NAME, `variants.${variantName}`);
@@ -46,14 +46,14 @@ export function getVariantObject(scene: Scene, variantName: string): Variant | B
 	}
 }
 
-type ObjectTypes = {
+export type ObjectTypes = {
 	wall: WallDocument;
 	light: AmbientLightDocument;
 	region: RegionDocument;
 	sound: AmbientSoundDocument;
 	tile: TileDocument;
 };
-const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
+export const ObjectKeys: (keyof ObjectTypes)[] = ["wall", "light", "region", "sound"];
 const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
 	wall: "Wall",
 	light: "AmbientLight",
@@ -137,18 +137,36 @@ export class BaseVariant implements VariantFlag {
 		}
 
 		for (const kind of ObjectKeys) {
-			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any;
+			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any[];
+			this.data[`delete${kind.capitalize()}Ids`] = [] as any[];
 		}
 		this.setFlag();
 	}
 
-	async activate() {
+	activate() {
 		// @ts-expect-error
-		await this.constructor.activateVariant(this);
+		return this.constructor.activateVariant(this);
 	}
 
 	static async activateVariant(variant: BaseVariant) {
 		const scene = variant.scene;
+
+		// Populate the scene with variant data
+		const deletePromises = [] as Promise<any>[];
+		const createPromises = [] as Promise<any>[];
+		for (const kind of ObjectKeys) {
+			deletePromises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], [], { deleteAll: true }));
+		}
+		Promise.all(deletePromises).then(() => {
+			for (const kind of ObjectKeys) {
+				createPromises.push(
+					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+						keepId: true,
+					}),
+				);
+			}
+		});
+		await Promise.all(createPromises);
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
@@ -157,14 +175,6 @@ export class BaseVariant implements VariantFlag {
 			scene.update({
 				background: { src: variant.data.background },
 				foreground: variant.data.foreground,
-			});
-		}
-
-		// Populate the scene with variant data
-		for (const kind of ObjectKeys) {
-			await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], scene[`${kind}s`].keys().toArray());
-			await scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
-				keepId: true,
 			});
 		}
 
@@ -187,6 +197,10 @@ export class Variant extends BaseVariant {
 
 	override update() {
 		const baseVariant = this.getBaseVariant();
+		if (this.name == "Default") {
+			baseVariant.update();
+			return
+		}
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
@@ -237,12 +251,31 @@ export class Variant extends BaseVariant {
 		}
 
 		if (variant.name != "Default") {
+			const deletePromises = [] as Promise<any>[];
+			const createPromises = [] as Promise<any>[];
 			for (const kind of ObjectKeys) {
 				await scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]);
-				scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
-					keepId: true,
-				});
 			}
+			Promise.all(deletePromises).then(() => {
+				for (const kind of ObjectKeys) {
+					createPromises.push(
+						scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+							keepId: true,
+						}),
+					);
+				}
+			});
+			await Promise.all(createPromises);
+		}
+
+		if (foundry.utils.isNewerVersion(game.version, 14)) {
+			// @ts-expect-error
+			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+		} else {
+			scene.update({
+				background: { src: variant.data.background },
+				foreground: variant.data.foreground,
+			});
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);

@@ -1,41 +1,67 @@
-<div class="tab {{ifThen tab.active "active" ""}}" data-group="{{ tab.group }}" data-tab="{{ tab.id }}">
-    <fieldset>
-        <legend class="control" style="display: flex; align-items: center;">
-            <span>{{ifThen document.flags.miskas-variant-picker.enabled "Disable" "Enable"}} Variants</span>
-            <button type="button" class="icon fa-regular {{ifThen document.flags.miskas-variant-picker.enabled "fa-square-check" "fa-square"}} inline-control" data-action="toggleVariants"
-                    data-tooltip aria-label="Toggle Variants"></button>
-            {{#if document.flags.miskas-variant-picker.enabled}}
-                <span style="padding-left: 10px;">Variants</span>
-                <button type="button" class="icon fa-regular fa-square-plus inline-control" data-action="addVariant"
-                        data-tooltip aria-label="Add Variant"></button>
-                <span style="padding-left: 10px;">Update Variant</span>
-                <button type="button" class="icon fa-regular fa-floppy-disk inline-control" data-action="updateVariant"
-                        data-tooltip aria-label="Update Variant With Active Data"></button>
-            {{/if}}
-        </legend>
-        <ol class="variants plain flexcol">
-            {{#if (not document.flags.miskas-variant-picker.enabled)}}
-                <p class="hint">Variants not enabled on this scene</p>
-            {{else}}
-                {{#if (lt (objectLength document.flags.miskas-variant-picker.variants) 2)}}
-                    <p class="hint">Variants allow you to have different wall and light configurations in one scene</p>
-                {{/if}}
-                {{#each document.flags.miskas-variant-picker.variants}}
-                    <li style="display: flex; align-items: center; gap: 4px; margin: 0;" data-variant-name="{{ this.name }}">
-                        <strong class="name" style="flex-grow: 1; flex-shrink: 1;">
-                            {{ this.name }}
-                            {{ifThen (eq this.name ...document.flags.miskas-variant-picker.active) (safe '<i class="fa-solid fa-bullseye" inert></i>') ""}}
-                        </strong>
-                        <span class="meta">{{ meta }}</span>
-                        <div class="controls flexrow">
-                            <button type="button" class="inline-control fa-solid fa-bullseye fa-fw"
-                                    data-tooltip aria-label="Activate Variant" data-action="activateVariant"></button>
-                            <button type="button" class="inline-control icon fa-solid fa-trash fa-fw"
-                                    data-action="deleteVariant" data-tooltip aria-label="delete Variant"></button>
-                        </div>
-                    </li>
-                {{/each}}
-            {{/if}}
-        </ol>
-    </fieldset>
+<div class="tab {{ ifThen tab.active "active" "" }}"
+     data-group="{{ tab.group }}"
+     data-tab="{{ tab.id }}">
+  <fieldset>
+    <legend class="control" style="display: flex; align-items: center;">
+      <span>{{ifThen document.flags.miskas-variant-picker.enabled "Disable" "Enable"}} Variants</span>
+      <button type="button"
+              class="icon fa-regular {{ifThen document.flags.miskas-variant-picker.enabled "fa-square-check" "fa-square"}} inline-control"
+              data-action="toggleVariants"
+              data-tooltip
+              aria-label="Toggle Variants"></button>
+      {{#if document.flags.miskas-variant-picker.enabled }}
+        <span style="padding-left: 10px;">Variants</span>
+        <button type="button"
+                class="icon fa-regular fa-square-plus inline-control"
+                data-action="addVariant"
+                data-tooltip
+                aria-label="Add Variant"></button>
+        <span style="padding-left: 10px;">Update Variant</span>
+        <button type="button"
+                class="icon fa-regular fa-floppy-disk inline-control"
+                data-action="updateVariant"
+                data-tooltip
+                aria-label="Update Variant With Active Data"></button>
+      {{/if}}
+    </legend>
+    <ol class="variants plain flexcol">
+      {{#if (not document.flags.miskas-variant-picker.enabled) }}
+        <p class="hint">Variants not enabled on this scene</p>
+      {{else}}
+        {{#if (lt (objectLength document.flags.miskas-variant-picker.variants) 2) }}
+          <p class="hint">Variants allow you to have different wall and light configurations in one scene</p>
+        {{/if}}
+        {{#each document.flags.miskas-variant-picker.variants }}
+          <li style="display: flex;
+                     align-items: center;
+                     gap: 4px;
+                     margin: 0"
+              data-variant-name="{{ this.name }}">
+            <strong class="name" style="flex-grow: 1; flex-shrink: 1;">
+              {{ this.name }}
+              {{ifThen (eq this.name ...document.flags.miskas-variant-picker.active) (safe '<i class="fa-solid fa-bullseye" inert></i>') ""}}
+            </strong>
+            <span class="meta">{{ meta }}</span>
+            <div class="controls flexrow">
+              <button type="button"
+                      class="inline-control icon fa-solid fa-bullseye fa-fw"
+                      data-tooltip
+                      aria-label="Activate Variant"
+                      data-action="activateVariant"></button>
+              <button type="button"
+                      class="inline-control icon fa-solid fa-edit fa-fw"
+                      data-tooltip
+                      aria-label="Edit Variant"
+                      data-action="editVariant"></button>
+              <button type="button"
+                      class="inline-control icon fa-solid fa-trash fa-fw"
+                      data-action="deleteVariant"
+                      data-tooltip
+                      aria-label="delete Variant"></button>
+            </div>
+          </li>
+        {{/each}}
+      {{/if}}
+    </ol>
+  </fieldset>
 </div>

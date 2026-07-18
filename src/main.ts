@@ -1,6 +1,7 @@
 import { MODULE_NAME } from "./constants.ts";
+import { VariantConfig } from "./variant_edit.ts";
 import { migrateVariants } from "./variant_migrator.ts";
-import { activateVariant, addVariant, deleteVariant, updateActive } from "./variant_opts.ts";
+import { activateVariant, addVariant, deleteVariant, getVariantObject, updateActive } from "./variant_opts.ts";
 import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
 function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
@@ -67,6 +68,10 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 	});
 });
 
+Hooks.on("renderSceneConfig", (...args) => {
+	(args[3].position.width as number) += 85;
+});
+
 Hooks.on("getSceneControlButtons", (controls) => {
 	controls.variants = {
 		name: "variants",
@@ -128,39 +133,42 @@ Hooks.once("init", () => {
 		template: `modules/${MODULE_NAME}/templates/variants.hbs`,
 	};
 
-	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS, {
-		position: {
-			width: foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.position.width as number + 85
+	Object.assign(foundry.applications.sheets.SceneConfig.DEFAULT_OPTIONS.actions, {
+		addVariant: async function () {
+			await addVariantPopup(this.document);
 		},
-		actions: {
-			addVariant: async function () {
-				await addVariantPopup(this.document);
-			},
-			deleteVariant: async function (event: Event) {
-				// @ts-expect-error
-				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-				if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
-					await deleteVariant(this.document, variantName);
-					if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-						this.document.setFlag(MODULE_NAME, "enabled", false);
-					}
+		deleteVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
+				await deleteVariant(this.document, variantName);
+				if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
+					this.document.setFlag(MODULE_NAME, "enabled", false);
 				}
-			},
-			activateVariant: async function (event: Event) {
+			}
+		},
+		activateVariant: async function (event: Event) {
+			// @ts-expect-error
+			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
+			activateVariant(this.document, variantName);
+		},
+		updateVariant: async function () {
+			updateActive(this.document);
+		},
+		toggleVariants: function () {
+			const enabled = this.document.getFlag(MODULE_NAME, "enabled");
+			this.document.setFlag(MODULE_NAME, "enabled", !enabled);
+			if (!enabled) {
+				addVariant(this.document, "Default");
+			}
+		},
+		editVariant: function (event: Event) {
+			const variant = getVariantObject(
+				this.document,
 				// @ts-expect-error
-				const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
-				activateVariant(this.document, variantName);
-			},
-			updateVariant: async function () {
-				updateActive(this.document);
-			},
-			toggleVariants: function () {
-				const enabled = this.document.getFlag(MODULE_NAME, "enabled");
-				this.document.setFlag(MODULE_NAME, "enabled", !enabled);
-				if (!enabled) {
-					addVariant(this.document, "Default");
-				}
-			},
+				event.target.closest("[data-variant-name]").dataset.variantName,
+			);
+			new VariantConfig({ variant }).render({ force: true });
 		},
 	});
 
@@ -179,7 +187,7 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
-	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s))
+	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);

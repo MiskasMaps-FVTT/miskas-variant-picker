@@ -1,0 +1,66 @@
+<form>
+  <style type="text/css">
+.entry {
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+.aligned {
+  display: flex;
+  align-items: center;
+}
+  </style>
+  <menu class="plain scrollable">
+    {{#each menus }}
+      <div>
+        <span class="control aligned">
+          <label for="{{this.id}}" class="entry">{{this.label}}</label>
+          <button id="{{this.id}}"
+                  type="button"
+                  class="icon fa-solid fa-chevron-down inline-control"
+                  data-tooltip
+                  aria-label="Update Variant With Active Data"
+                  data-action="toggleCollapse"></button>
+        </span>
+        <fieldset style="display: none"
+                  data-kind="{{this.kind}}"
+                  data-type="{{this.type}}">
+          <legend class="aligned">
+            <button id="clear-{{_id}}"
+                    type="button"
+                    class="icon fa-solid fa-trash inline-control"
+                    data-tooltip
+                    aria-label="Clear All"
+                    data-action="clear"></button>
+          </legend>
+          <ol id="{{this.id}}-menu" class="plain">
+            {{#each this.entries }}
+              <li class="aligned"
+                  data-entry-id="{{_id}}"
+                  data-tooltip
+                  aria-label="{{_id}}">
+                <span class="entry">
+                  {{#if (eq ...kind "wall") }}
+                    ({{c.[0]}}, {{c.[1]}}) to ({{c.[2]}}, {{c.[3]}})
+                    {{else if (eq ...kind "light") }}
+                    ({{x}}, {{y}})
+                    {{else if (eq ...kind "sound") }}
+                    ({{x}}, {{y}})
+                    {{else if (eq ...kind "region") }}
+                    {{name}}
+                  {{/if}}
+                </span>
+                <button id="delete-{{_id}}"
+                        type="button"
+                        class="icon fa-solid fa-trash inline-control"
+                        data-tooltip
+                        aria-label="Delete"
+                        data-action="delete"></button>
+              </li>
+            {{/each}}
+          </ol>
+        </fieldset>
+      </div>
+    {{/each}}
+  </menu>
+</form>
