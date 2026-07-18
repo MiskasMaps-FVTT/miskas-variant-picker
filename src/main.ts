@@ -168,7 +168,6 @@ Hooks.once("init", () => {
 				// @ts-expect-error
 				event.target.closest("[data-variant-name]").dataset.variantName,
 			);
-			console.log(variant);
 			new VariantConfig({ variant }).render({ force: true });
 		},
 	});
