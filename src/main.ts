@@ -69,7 +69,7 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 });
 
 Hooks.on("renderSceneConfig", (...args) => {
-	(args[3].position.width as number) += 85;
+	(args[3].position.width as number) += 45;
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {
