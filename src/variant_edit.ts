@@ -16,44 +16,38 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 					menu.style.display = "block";
 				}
 			},
-			activateEntry: (event: Event) => {
-				console.log(event);
-			},
-			clear: async (event: Event) => {
+			clear: async function (event: Event) {
 				const target = event.target as HTMLButtonElement;
 				const fieldset = target.closest("fieldset");
 				const kind = fieldset.dataset.kind as keyof ObjectTypes;
 				const type = fieldset.dataset.type as "create" | "delete";
 				if (await foundry.applications.api.DialogV2.confirm({ content: `Clear ${type} ${kind}s?` })) {
-					const variantName = target.form.dataset.variant;
-					const scene = fromUuidSync(target.form.dataset.scene) as Scene;
-					const variant = getVariantObject(scene, variantName);
-					// @ts-expect-error
-					variant.data[`${type}${kind.capitalize()}${type == "create" ? "Data" : "Ids"}`] = [];
-					for (const child of fieldset.querySelector("ol").children) {
-						console.log(child);
-						child.remove();
+					const variant = this.options.variant;
+					variant.data[`${type}${kind.capitalize()}${type == "create" ? "Data" : "Ids"}`].length = 0;
+					const ol = fieldset.querySelector("ol");
+					while (ol.firstChild) {
+						ol.removeChild(ol.lastChild);
 					}
 					variant.setFlag();
 				}
 			},
-			delete: (event: Event) => {
+			delete: function (event: Event) {
 				const target = event.target as HTMLButtonElement;
-				const variantName = target.form.dataset.variant;
-				const scene = fromUuidSync(target.form.dataset.scene) as Scene;
 				const id = target.parentElement.dataset.entryId;
 				const fieldset = target.closest("fieldset");
 				const kind = fieldset.dataset.kind as keyof ObjectTypes;
 				const type = fieldset.dataset.type as "create" | "delete";
-				const variant = getVariantObject(scene, variantName);
-				// @ts-expect-error
-				const data = variant.data[`${type}${kind.capitalize()}${type == "create" ? "Data" : "Ids"}`] as any[];
+				const variant = this.options.variant;
+				const data = variant.data[`${type}${kind.capitalize()}${type == "create" ? "Data" : "Ids"}`];
 				const remove = data.findIndex((v: { _id: string }) => v._id == id);
 				data.splice(remove, 1);
 				target.parentElement.remove();
 				variant.setFlag();
 			},
 			reload: function () {
+				const newVariant = getVariantObject(this.options.variant.scene, this.options.variant.name);
+				this.options.variant.data = newVariant.data;
+				this.updateMenus()
 				this.render();
 			},
 		},
@@ -82,9 +76,7 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 	override options: any;
 	menus: Record<string, object>;
 
-	constructor(options: any) {
-		super(options);
-		this.options.window.title = `Variant: ${options.variant.name}`;
+	updateMenus() {
 		this.menus = {};
 		const defaultVariant = this.options.variant.getBaseVariant();
 
@@ -108,9 +100,15 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 		}
 	}
 
+	constructor(options: any) {
+		super(options);
+		this.options.window.title = `Variant: ${options.variant.name}`;
+	}
+
 	// @ts-expect-error
 	async _preparePartContext(_, context) {
 		context.variant = this.options.variant;
+		this.updateMenus();
 		context.menus = this.menus;
 		return context;
 	}
