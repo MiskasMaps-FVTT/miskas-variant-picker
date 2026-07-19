@@ -48,11 +48,13 @@
                       data-tooltip
                       aria-label="Activate Variant"
                       data-action="activateVariant"></button>
-              <button type="button"
-                      class="inline-control icon fa-solid fa-edit fa-fw"
-                      data-tooltip
-                      aria-label="Edit Variant"
-                      data-action="editVariant"></button>
+              {{#if (variantpickerExperimental) }}
+                <button type="button"
+                        class="inline-control icon fa-solid fa-edit fa-fw"
+                        data-tooltip
+                        aria-label="Edit Variant"
+                        data-action="editVariant"></button>
+              {{/if}}
               <button type="button"
                       class="inline-control icon fa-solid fa-trash fa-fw"
                       data-action="deleteVariant"

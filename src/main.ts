@@ -186,9 +186,17 @@ Hooks.once("init", () => {
 		default: false,
 		type: Boolean,
 	});
+	game.settings.register(MODULE_NAME, "experimental", {
+		name: "Enable Experimental Features",
+		hint: "Enables WIP features that are not fully functional and have missing features",
+		config: true,
+		default: false,
+		type: Boolean,
+	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
 	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s));
+	Handlebars.registerHelper("variantpickerExperimental", () => game.settings.get("miskas-variant-picker", "experimental"));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
