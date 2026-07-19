@@ -145,12 +145,12 @@ export class BaseVariant implements VariantFlag {
 		this.setFlag();
 	}
 
-	activate() {
+	async activate(): Promise<any> {
 		// @ts-expect-error
 		return this.constructor.activateVariant(this);
 	}
 
-	static async activateVariant(variant: BaseVariant) {
+	static async activateVariant(variant: BaseVariant): Promise<any> {
 		const scene = variant.scene;
 
 		// Populate the scene with variant data
@@ -169,17 +169,19 @@ export class BaseVariant implements VariantFlag {
 		}
 		await Promise.all(createPromises);
 
+		let promise;
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+			promise = scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
-			scene.update({
+			promise = scene.update({
 				background: { src: variant.data.background },
 				foreground: variant.data.foreground,
 			});
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
+		return promise;
 	}
 }
 
@@ -236,7 +238,7 @@ export class Variant extends BaseVariant {
 		this.setFlag();
 	}
 
-	override activate() {
+	override async activate(): Promise<any> {
 		// Validate variant data and correct them
 		for (const kind of ObjectKeys) {
 			const baseVariant = this.getBaseVariant();
@@ -256,7 +258,7 @@ export class Variant extends BaseVariant {
 		return this.constructor.activateVariant(this);
 	}
 
-	static override async activateVariant(variant: Variant) {
+	static override async activateVariant(variant: Variant): Promise<any> {
 		// Load base data
 		await variant.getBaseVariant().activate();
 
@@ -272,35 +274,35 @@ export class Variant extends BaseVariant {
 			});
 		}
 
+		const promises = [] as Promise<any>[];
 		if (variant.name != "Default") {
-			const deletePromises = [] as Promise<any>[];
-			const createPromises = [] as Promise<any>[];
 			for (const kind of ObjectKeys) {
-				deletePromises.push(
-					scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]),
-				);
+				promises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]));
 			}
-			await Promise.all(deletePromises);
 			for (const kind of ObjectKeys) {
-				createPromises.push(
+				promises.push(
 					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
 						keepId: true,
 					}),
 				);
 			}
-			await Promise.all(createPromises);
+		} else {
+			return Promise<void>;
 		}
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+			promises.push(scene.updateEmbeddedDocuments("Level", variant.data.levelsData));
 		} else {
-			scene.update({
-				background: { src: variant.data.background },
-				foreground: variant.data.foreground,
-			});
+			promises.push(
+				scene.update({
+					background: { src: variant.data.background },
+					foreground: variant.data.foreground,
+				}),
+			);
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
+		return Promise.all(promises);
 	}
 }
