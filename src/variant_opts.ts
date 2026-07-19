@@ -80,6 +80,8 @@ type BaseVariantData = {
  */
 type VariantData = Partial<BaseVariantData> & {
 	[key in keyof ObjectTypes as `delete${Capitalize<key>}Ids`]?: string[];
+} & {
+	[key in keyof ObjectTypes as `update${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
 
 /**
@@ -141,7 +143,9 @@ export class BaseVariant implements VariantFlag {
 		for (const kind of ObjectKeys) {
 			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any[];
 			this.data[`delete${kind.capitalize()}Ids`] = [] as any[];
+			this.data[`update${kind.capitalize()}Data`] = [] as any[];
 		}
+
 		this.setFlag();
 	}
 
@@ -214,10 +218,13 @@ export class Variant extends BaseVariant {
 		}
 
 		for (const kind of ObjectKeys) {
-			const baseIds = new Set(baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) ?? []);
+			const capitalKind = kind.capitalize();
+			const baseIds = new Set(baseVariant.data[`create${capitalKind}Data`]?.map((x) => x._id) ?? []);
 			const sceneIds = new Set([...this.scene[`${kind}s`].keys()]);
 			const added = new Set<string>();
 			const deleted = new Set<string>();
+			const kept = new Set<string>();
+			const updates = [];
 			for (const id of sceneIds) {
 				if (!baseIds?.has(id)) {
 					added.add(id);
@@ -226,15 +233,27 @@ export class Variant extends BaseVariant {
 			for (const id of baseIds) {
 				if (!sceneIds?.has(id)) {
 					deleted.add(id);
+				} else {
+					kept.add(id);
 				}
 			}
-			this.data[`delete${kind.capitalize()}Ids`] = [...deleted];
-			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`]
+			for (const id of kept) {
+				const base = baseVariant.scene[`${kind}s`].get(id);
+				const current = this.scene[`${kind}s`].get(id);
+				if (JSON.stringify(base) === JSON.stringify(current)) {
+					updates.push(current);
+				}
+			}
+			this.data[`delete${capitalKind}Ids`] = [...deleted];
+			this.data[`create${capitalKind}Data`] = this.scene[`${kind}s`]
 				.values()
 				// @ts-expect-error
 				.filter((x) => added.has(x._id))
 				.toArray();
+			// @ts-expect-error
+			this.data[`update${capitalKind}Data`] = updates;
 		}
+
 		this.setFlag();
 	}
 
@@ -242,15 +261,20 @@ export class Variant extends BaseVariant {
 		// Validate variant data and correct them
 		for (const kind of ObjectKeys) {
 			const baseVariant = this.getBaseVariant();
+			const capitalKind = kind.capitalize();
 			const ids = new Set(
 				baseVariant.data[`create${kind.capitalize()}Data`]
 					.values()
 					.map((x) => x._id)
 					.toArray(),
 			);
-			const deleteIds = this.data[`delete${kind.capitalize()}Ids`];
-			const existingIds = deleteIds.filter((x) => ids.has(x));
-			this.data[`delete${kind.capitalize()}Ids`] = existingIds;
+			const deleteIds = this.data[`delete${capitalKind}Ids`];
+			const updateIds = this.data[`update${capitalKind}Data`];
+			this.data[`delete${capitalKind}Ids`] = deleteIds.filter((x) => ids.has(x));
+			for (const id in deleteIds) ids.delete(id);
+			// @ts-expect-error
+			this.data[`update${capitalKind}Data`] = updateIds.filter((x) => ids.has(x._id));
+
 			this.setFlag();
 		}
 
@@ -277,11 +301,11 @@ export class Variant extends BaseVariant {
 		const promises = [] as Promise<any>[];
 		if (variant.name != "Default") {
 			for (const kind of ObjectKeys) {
-				promises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]));
-			}
-			for (const kind of ObjectKeys) {
+				const capitalKind = kind.capitalize();
+				promises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${capitalKind}Ids`]));
+				promises.push(scene.updateEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`update${capitalKind}Data`]));
 				promises.push(
-					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${capitalKind}Data`] as any[], {
 						keepId: true,
 					}),
 				);
