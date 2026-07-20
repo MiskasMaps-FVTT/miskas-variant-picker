@@ -43,9 +43,9 @@ export function getVariantObject(scene: Scene, variantName: string): Variant | B
 	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 	if (variantFlags === undefined) return undefined;
 	if (variantFlags?.name == "Default") {
-		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData);
+		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData, variantFlags.label);
 	} else {
-		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data);
+		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data, variantFlags.label);
 	}
 }
 
@@ -90,7 +90,7 @@ type VariantData = Partial<BaseVariantData> & {
  */
 export interface VariantFlag {
 	name: string;
-	label?: string;
+	label: string;
 	sceneUuid: string;
 	data: VariantData;
 	active?: boolean;
@@ -103,11 +103,12 @@ export class BaseVariant implements VariantFlag {
 	name: string = "Default";
 	sceneUuid: string;
 	data: VariantData;
+	label: string;
 	scene: Scene;
 
-	constructor(scene: Scene, data?: BaseVariantData);
-	constructor(sceneUuid: string, data?: BaseVariantData);
-	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData) {
+	constructor(scene: Scene, data?: BaseVariantData, label?: string);
+	constructor(sceneUuid: string, data?: BaseVariantData, label?: string);
+	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData, label?: string) {
 		if (typeof sceneOrUuid == "string") {
 			const parsed = foundry.utils.parseUuid(sceneOrUuid);
 			if (parsed.type !== "Scene") throw new Error("Provided UUID is not a Scene UUID");
@@ -117,6 +118,7 @@ export class BaseVariant implements VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
+		this.label = label ?? "";
 		this.data = data ?? {};
 	}
 
@@ -192,15 +194,16 @@ export class BaseVariant implements VariantFlag {
 }
 
 export class Variant extends BaseVariant {
-	constructor(variantName: string, scene: Scene, data: VariantData);
-	constructor(variantName: string, sceneUuid: string, data: VariantData);
-	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData) {
+	constructor(variantName: string, scene: Scene, data: VariantData, label?: string);
+	constructor(variantName: string, sceneUuid: string, data: VariantData, label?: string);
+	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData, label?: string) {
 		if (typeof sceneOrUuid == "string") {
 			super(sceneOrUuid);
 		} else {
 			super(sceneOrUuid);
 		}
 		this.name = variantName;
+		this.label = label ?? "";
 		this.data = data ?? {};
 	}
 
