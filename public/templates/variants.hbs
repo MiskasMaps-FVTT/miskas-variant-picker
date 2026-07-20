@@ -36,10 +36,12 @@
                      align-items: center;
                      gap: 4px;
                      margin: 0"
-              data-variant-name="{{ this.name }}">
+              data-variant-name="{{this.name}}">
             <strong class="name" style="flex-grow: 1; flex-shrink: 1;">
-              {{ this.name }}
-              {{ifThen (eq this.name ...document.flags.miskas-variant-picker.active) (safe '<i class="fa-solid fa-bullseye" inert></i>') ""}}
+              {{ ifThen this.label this.label this.name }}
+              {{#if (eq this.name ...document.flags.miskas-variant-picker.active) }}
+                <i class="fa-solid fa-bullseye" inert></i>
+              {{/if}}
             </strong>
             <span class="meta">{{ meta }}</span>
             <div class="controls flexrow">

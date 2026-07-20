@@ -13,6 +13,7 @@ export function activateVariant(scene: Scene, variantName: string) {
 
 export function setVariant(scene: Scene, variant: VariantFlag) {
 	return scene.setFlag(MODULE_NAME, `variants.${variant.name}`, {
+		label: variant.label,
 		name: variant.name,
 		sceneUuid: variant.sceneUuid,
 		data: variant.data,
@@ -89,6 +90,7 @@ type VariantData = Partial<BaseVariantData> & {
  */
 export interface VariantFlag {
 	name: string;
+	label?: string;
 	sceneUuid: string;
 	data: VariantData;
 	active?: boolean;

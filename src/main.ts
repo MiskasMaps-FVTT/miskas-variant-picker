@@ -60,10 +60,11 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 		// @ts-expect-error
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
 		if (scene.getFlag(MODULE_NAME, "enabled")) {
-			const activateVariant = scene.getFlag(MODULE_NAME, "active");
+			const active = scene.getFlag(MODULE_NAME, "active");
+			const label = scene.getFlag(MODULE_NAME, `variants.${active}`).label ?? active;
 			const sceneEntry = entry.querySelector(".scene-name");
-			if (activateVariant !== undefined) {
-				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${activateVariant}</span>`;
+			if (active !== undefined) {
+				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${label}</span>`;
 			}
 		}
 	});
