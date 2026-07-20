@@ -237,10 +237,15 @@ export class Variant extends BaseVariant {
 					kept.add(id);
 				}
 			}
+			const baseDataMap = new Map();
+			for (const data of baseVariant.data[`create${capitalKind}Data`]) {
+				baseDataMap.set(data._id, data);
+			}
+
 			for (const id of kept) {
-				const base = baseVariant.scene[`${kind}s`].get(id);
+				const base = baseDataMap.get(id);
 				const current = this.scene[`${kind}s`].get(id);
-				if (JSON.stringify(base) === JSON.stringify(current)) {
+				if (!(JSON.stringify(base) === JSON.stringify(current))) {
 					updates.push(current);
 				}
 			}
