@@ -5,11 +5,12 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 	static override DEFAULT_OPTIONS = {
-		tag: "div",
+		tag: "form",
 		actions: {
 			toggleCollapse: (event: Event) => {
 				const target = event.target as HTMLButtonElement;
-				const menu = target.parentElement.nextElementSibling as HTMLElement;
+				const menu = target.form.querySelector(`#${target.id}-menu`) as HTMLElement;
+				console.log(menu)
 				if (menu.style.display === "block") {
 					menu.style.display = "none";
 				} else {
@@ -71,7 +72,7 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 				this.render();
 			},
 			updateLabel: function (event: Event) {
-				console.log(event)
+				console.log(event);
 				const target = event.target as HTMLButtonElement;
 				this.options.variant.scene.setFlag(
 					"miskas-variant-picker",
@@ -81,8 +82,8 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 			},
 		},
 		position: {
-			width: 300,
-			height: 300,
+			width: 400,
+			height: 500,
 		},
 		window: {
 			resizable: true,
@@ -111,28 +112,34 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
 		for (const kind of ObjectKeys) {
 			const capitalKind = kind.capitalize();
-			this.menus[`create-${kind}`] = {
-				id: `create-${kind}`,
-				type: "create",
-				kind: kind,
-				label: `Added ${kind.capitalize()}s`,
-				entries: this.options.variant.data[`create${capitalKind}Data`],
-			};
-			this.menus[`delete-${kind}`] = {
-				id: `delete-${kind}`,
-				type: "delete",
-				kind: kind,
-				label: `Removed ${capitalKind}s`,
-				entries: defaultVariant.data[`create${capitalKind}Data`].filter((x) => {
-					return !!this.options.variant.data[`delete${capitalKind}Ids`].includes(x._id);
-				}),
-			};
-			this.menus[`update-${kind}`] = {
-				id: `update-${kind}`,
-				type: "update",
-				kind: kind,
-				label: `Updated ${capitalKind}s`,
-				entries: this.options.variant.data[`update${capitalKind}Data`],
+			this.menus[kind] = {
+				id: kind,
+				label: `${capitalKind}s`,
+				entries: [
+					{
+						id: `create-${kind}`,
+						type: "create",
+						kind: kind,
+						label: "Added",
+						entries: this.options.variant.data[`create${capitalKind}Data`],
+					},
+					{
+						id: `delete-${kind}`,
+						type: "delete",
+						kind: kind,
+						label: "Removed",
+						entries: defaultVariant.data[`create${capitalKind}Data`].filter((x) => {
+							return !!this.options.variant.data[`delete${capitalKind}Ids`].includes(x._id);
+						}),
+					},
+					{
+						id: `update-${kind}`,
+						type: "update",
+						kind: kind,
+						label: "Updated",
+						entries: this.options.variant.data[`update${capitalKind}Data`],
+					},
+				],
 			};
 		}
 	}
