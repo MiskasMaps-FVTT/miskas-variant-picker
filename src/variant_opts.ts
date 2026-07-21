@@ -71,6 +71,7 @@ type BaseVariantData = {
 	background: string;
 	foreground: string;
 	levelsData: unknown[]; // Type not defined in League-of-Foundry-Developers/foundry-vtt-types yet
+	sceneData: SceneData;
 } & {
 	[key in keyof ObjectTypes as `create${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
@@ -82,6 +83,8 @@ type VariantData = Partial<BaseVariantData> & {
 	[key in keyof ObjectTypes as `delete${Capitalize<key>}Ids`]?: string[];
 };
 
+type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment">;
+
 /**
  * All the data that exists in the base variant flag
  */
@@ -89,7 +92,6 @@ export interface VariantFlag {
 	name: string;
 	sceneUuid: string;
 	data: VariantData;
-	active?: boolean;
 }
 
 /**
@@ -142,6 +144,12 @@ export class BaseVariant implements VariantFlag {
 			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any[];
 			this.data[`delete${kind.capitalize()}Ids`] = [] as any[];
 		}
+
+		this.data.sceneData = {
+			name: this.scene.name,
+			environment: this.scene.environment as unknown as SceneData["environment"],
+		};
+
 		this.setFlag();
 	}
 
@@ -178,6 +186,13 @@ export class BaseVariant implements VariantFlag {
 				foreground: variant.data.foreground,
 			});
 		}
+
+		scene.update({
+			// @ts-expect-error
+			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
+			// @ts-expect-error
+			environment: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.environment ?? scene.environment),
+		});
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
 	}
@@ -233,6 +248,12 @@ export class Variant extends BaseVariant {
 				.filter((x) => added.has(x._id))
 				.toArray();
 		}
+
+		this.data.sceneData = {
+			name: this.scene.name,
+			environment: this.scene.environment as unknown as SceneData["environment"],
+		};
+
 		this.setFlag();
 	}
 
@@ -271,6 +292,13 @@ export class Variant extends BaseVariant {
 				foreground: variant.data.foreground,
 			});
 		}
+
+		scene.update({
+			// @ts-expect-error
+			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
+			// @ts-expect-error
+			environment: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.environment ?? scene.environment),
+		});
 
 		if (variant.name != "Default") {
 			const deletePromises = [] as Promise<any>[];
