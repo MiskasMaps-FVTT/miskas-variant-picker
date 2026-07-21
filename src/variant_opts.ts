@@ -83,7 +83,7 @@ type VariantData = Partial<BaseVariantData> & {
 	[key in keyof ObjectTypes as `delete${Capitalize<key>}Ids`]?: string[];
 };
 
-type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment">;
+type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment" | "navName">;
 
 /**
  * All the data that exists in the base variant flag
@@ -147,7 +147,8 @@ export class BaseVariant implements VariantFlag {
 
 		this.data.sceneData = {
 			name: this.scene.name,
-			environment: this.scene.environment as unknown as SceneData["environment"],
+			navName: this.scene.navName as any,
+			environment: this.scene.environment as any,
 		};
 
 		this.setFlag();
@@ -191,7 +192,11 @@ export class BaseVariant implements VariantFlag {
 			// @ts-expect-error
 			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
 			// @ts-expect-error
-			environment: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.environment ?? scene.environment),
+			environment: new foundry.data.operators.ForcedReplacement(
+				variant.data?.sceneData?.environment ?? scene.environment,
+			),
+			// @ts-expect-error
+			navName: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.navName ?? scene.navName),
 		});
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
@@ -251,7 +256,8 @@ export class Variant extends BaseVariant {
 
 		this.data.sceneData = {
 			name: this.scene.name,
-			environment: this.scene.environment as unknown as SceneData["environment"],
+			navName: this.scene.navName as any,
+			environment: this.scene.environment as any,
 		};
 
 		this.setFlag();
@@ -297,7 +303,11 @@ export class Variant extends BaseVariant {
 			// @ts-expect-error
 			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
 			// @ts-expect-error
-			environment: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.environment ?? scene.environment),
+			environment: new foundry.data.operators.ForcedReplacement(
+				variant.data?.sceneData?.environment ?? scene.environment,
+			),
+			// @ts-expect-error
+			navName: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.navName ?? scene.navName),
 		});
 
 		if (variant.name != "Default") {
