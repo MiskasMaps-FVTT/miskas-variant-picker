@@ -189,7 +189,7 @@ Hooks.once("init", () => {
 	});
 	game.settings.register(MODULE_NAME, "experimental", {
 		name: "Enable Experimental Features",
-		hint: "Enables WIP features that are not fully functional and have missing features",
+		hint: "Enables WIP features that are not fully functional and have missing features. Currently no features are experimental",
 		config: true,
 		default: false,
 		type: Boolean,
