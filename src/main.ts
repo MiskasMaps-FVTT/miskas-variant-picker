@@ -34,7 +34,7 @@ function registerUpdateHooks(value: boolean) {
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
 		callback: async (e) => {
-			pickVariant(fromUuidSync("Scene." + e.dataset.entryId) as Scene);
+			pickVariant(fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (e) => {
