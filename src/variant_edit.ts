@@ -10,7 +10,6 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 			toggleCollapse: (event: Event) => {
 				const target = event.target as HTMLButtonElement;
 				const menu = target.form.querySelector(`#${target.id}-menu`) as HTMLElement;
-				console.log(menu)
 				if (menu.style.display === "block") {
 					menu.style.display = "none";
 				} else {
@@ -72,7 +71,6 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 				this.render();
 			},
 			updateLabel: function (event: Event) {
-				console.log(event);
 				const target = event.target as HTMLButtonElement;
 				this.options.variant.scene.setFlag(
 					"miskas-variant-picker",
