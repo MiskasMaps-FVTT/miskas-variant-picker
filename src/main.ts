@@ -188,7 +188,6 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
-	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
