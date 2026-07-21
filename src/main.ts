@@ -91,7 +91,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 			},
 			saveVariant: {
 				name: "saveVariant",
-				title: "Update Variant",
+				title: "Save Changes",
 				icon: "fa-solid fa-floppy-disk",
 				order: 0,
 				button: true,
