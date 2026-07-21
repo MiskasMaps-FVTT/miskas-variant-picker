@@ -13,6 +13,7 @@ export function activateVariant(scene: Scene, variantName: string) {
 
 export function setVariant(scene: Scene, variant: VariantFlag) {
 	return scene.setFlag(MODULE_NAME, `variants.${variant.name}`, {
+		label: variant.label,
 		name: variant.name,
 		sceneUuid: variant.sceneUuid,
 		data: variant.data,
@@ -42,9 +43,9 @@ export function getVariantObject(scene: Scene, variantName: string): Variant | B
 	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 	if (variantFlags === undefined) return undefined;
 	if (variantFlags?.name == "Default") {
-		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData);
+		return new BaseVariant(variantFlags.sceneUuid, variantFlags.data as BaseVariantData, variantFlags.label);
 	} else {
-		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data);
+		return new Variant(variantFlags?.name, variantFlags.sceneUuid, variantFlags.data, variantFlags.label);
 	}
 }
 
@@ -81,6 +82,8 @@ type BaseVariantData = {
  */
 type VariantData = Partial<BaseVariantData> & {
 	[key in keyof ObjectTypes as `delete${Capitalize<key>}Ids`]?: string[];
+} & {
+	[key in keyof ObjectTypes as `update${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
 
 type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment" | "navName">;
@@ -90,6 +93,7 @@ type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment" | "navNa
  */
 export interface VariantFlag {
 	name: string;
+	label: string;
 	sceneUuid: string;
 	data: VariantData;
 }
@@ -101,11 +105,12 @@ export class BaseVariant implements VariantFlag {
 	name: string = "Default";
 	sceneUuid: string;
 	data: VariantData;
+	label: string;
 	scene: Scene;
 
-	constructor(scene: Scene, data?: BaseVariantData);
-	constructor(sceneUuid: string, data?: BaseVariantData);
-	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData) {
+	constructor(scene: Scene, data?: BaseVariantData, label?: string);
+	constructor(sceneUuid: string, data?: BaseVariantData, label?: string);
+	constructor(sceneOrUuid: Scene | string, data?: BaseVariantData, label?: string) {
 		if (typeof sceneOrUuid == "string") {
 			const parsed = foundry.utils.parseUuid(sceneOrUuid);
 			if (parsed.type !== "Scene") throw new Error("Provided UUID is not a Scene UUID");
@@ -115,6 +120,7 @@ export class BaseVariant implements VariantFlag {
 			this.scene = sceneOrUuid;
 			this.sceneUuid = sceneOrUuid.uuid;
 		}
+		this.label = label ?? "";
 		this.data = data ?? {};
 	}
 
@@ -143,6 +149,7 @@ export class BaseVariant implements VariantFlag {
 		for (const kind of ObjectKeys) {
 			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`].values().toArray() as any[];
 			this.data[`delete${kind.capitalize()}Ids`] = [] as any[];
+			this.data[`update${kind.capitalize()}Data`] = [] as any[];
 		}
 
 		this.data.sceneData = {
@@ -154,12 +161,12 @@ export class BaseVariant implements VariantFlag {
 		this.setFlag();
 	}
 
-	activate() {
+	async activate(): Promise<any> {
 		// @ts-expect-error
 		return this.constructor.activateVariant(this);
 	}
 
-	static async activateVariant(variant: BaseVariant) {
+	static async activateVariant(variant: BaseVariant): Promise<any> {
 		const scene = variant.scene;
 
 		// Populate the scene with variant data
@@ -178,11 +185,12 @@ export class BaseVariant implements VariantFlag {
 		}
 		await Promise.all(createPromises);
 
+		let promise;
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+			promise = scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
 		} else {
-			scene.update({
+			promise = scene.update({
 				background: { src: variant.data.background },
 				foreground: variant.data.foreground,
 			});
@@ -200,19 +208,21 @@ export class BaseVariant implements VariantFlag {
 		});
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
+		return promise;
 	}
 }
 
 export class Variant extends BaseVariant {
-	constructor(variantName: string, scene: Scene, data: VariantData);
-	constructor(variantName: string, sceneUuid: string, data: VariantData);
-	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData) {
+	constructor(variantName: string, scene: Scene, data: VariantData, label?: string);
+	constructor(variantName: string, sceneUuid: string, data: VariantData, label?: string);
+	constructor(variantName: string, sceneOrUuid: Scene | string, data: VariantData, label?: string) {
 		if (typeof sceneOrUuid == "string") {
 			super(sceneOrUuid);
 		} else {
 			super(sceneOrUuid);
 		}
 		this.name = variantName;
+		this.label = label ?? "";
 		this.data = data ?? {};
 	}
 
@@ -232,10 +242,13 @@ export class Variant extends BaseVariant {
 		}
 
 		for (const kind of ObjectKeys) {
-			const baseIds = new Set(baseVariant.data[`create${kind.capitalize()}Data`]?.map((x) => x._id) ?? []);
+			const capitalKind = kind.capitalize();
+			const baseIds = new Set(baseVariant.data[`create${capitalKind}Data`]?.map((x) => x._id) ?? []);
 			const sceneIds = new Set([...this.scene[`${kind}s`].keys()]);
 			const added = new Set<string>();
 			const deleted = new Set<string>();
+			const kept = new Set<string>();
+			const updates = [];
 			for (const id of sceneIds) {
 				if (!baseIds?.has(id)) {
 					added.add(id);
@@ -244,14 +257,30 @@ export class Variant extends BaseVariant {
 			for (const id of baseIds) {
 				if (!sceneIds?.has(id)) {
 					deleted.add(id);
+				} else {
+					kept.add(id);
 				}
 			}
-			this.data[`delete${kind.capitalize()}Ids`] = [...deleted];
-			this.data[`create${kind.capitalize()}Data`] = this.scene[`${kind}s`]
+			const baseDataMap = new Map();
+			for (const data of baseVariant.data[`create${capitalKind}Data`]) {
+				baseDataMap.set(data._id, data);
+			}
+
+			for (const id of kept) {
+				const base = baseDataMap.get(id);
+				const current = this.scene[`${kind}s`].get(id);
+				if (!(JSON.stringify(base) === JSON.stringify(current))) {
+					updates.push(current);
+				}
+			}
+			this.data[`delete${capitalKind}Ids`] = [...deleted];
+			this.data[`create${capitalKind}Data`] = this.scene[`${kind}s`]
 				.values()
 				// @ts-expect-error
 				.filter((x) => added.has(x._id))
 				.toArray();
+			// @ts-expect-error
+			this.data[`update${capitalKind}Data`] = updates;
 		}
 
 		this.data.sceneData = {
@@ -263,19 +292,24 @@ export class Variant extends BaseVariant {
 		this.setFlag();
 	}
 
-	override activate() {
+	override async activate(): Promise<any> {
 		// Validate variant data and correct them
 		for (const kind of ObjectKeys) {
 			const baseVariant = this.getBaseVariant();
+			const capitalKind = kind.capitalize();
 			const ids = new Set(
 				baseVariant.data[`create${kind.capitalize()}Data`]
 					.values()
 					.map((x) => x._id)
 					.toArray(),
 			);
-			const deleteIds = this.data[`delete${kind.capitalize()}Ids`];
-			const existingIds = deleteIds.filter((x) => ids.has(x));
-			this.data[`delete${kind.capitalize()}Ids`] = existingIds;
+			const deleteIds = this.data[`delete${capitalKind}Ids`];
+			const updateIds = this.data[`update${capitalKind}Data`];
+			this.data[`delete${capitalKind}Ids`] = deleteIds.filter((x) => ids.has(x));
+			for (const id in deleteIds) ids.delete(id);
+			// @ts-expect-error
+			this.data[`update${capitalKind}Data`] = updateIds.filter((x) => ids.has(x._id));
+
 			this.setFlag();
 		}
 
@@ -283,7 +317,7 @@ export class Variant extends BaseVariant {
 		return this.constructor.activateVariant(this);
 	}
 
-	static override async activateVariant(variant: Variant) {
+	static override async activateVariant(variant: Variant): Promise<any> {
 		// Load base data
 		await variant.getBaseVariant().activate();
 
@@ -299,6 +333,8 @@ export class Variant extends BaseVariant {
 			});
 		}
 
+		const promises = [] as Promise<any>[];
+
 		scene.update({
 			// @ts-expect-error
 			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
@@ -311,34 +347,33 @@ export class Variant extends BaseVariant {
 		});
 
 		if (variant.name != "Default") {
-			const deletePromises = [] as Promise<any>[];
-			const createPromises = [] as Promise<any>[];
 			for (const kind of ObjectKeys) {
-				deletePromises.push(
-					scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${kind.capitalize()}Ids`]),
-				);
-			}
-			await Promise.all(deletePromises);
-			for (const kind of ObjectKeys) {
-				createPromises.push(
-					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${kind.capitalize()}Data`] as any[], {
+				const capitalKind = kind.capitalize();
+				promises.push(scene.deleteEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`delete${capitalKind}Ids`]));
+				promises.push(scene.updateEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`update${capitalKind}Data`]));
+				promises.push(
+					scene.createEmbeddedDocuments(EmbeddedKeys[kind], variant.data[`create${capitalKind}Data`] as any[], {
 						keepId: true,
 					}),
 				);
 			}
-			await Promise.all(createPromises);
+		} else {
+			return Promise<void>;
 		}
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			scene.updateEmbeddedDocuments("Level", variant.data.levelsData);
+			promises.push(scene.updateEmbeddedDocuments("Level", variant.data.levelsData));
 		} else {
-			scene.update({
-				background: { src: variant.data.background },
-				foreground: variant.data.foreground,
-			});
+			promises.push(
+				scene.update({
+					background: { src: variant.data.background },
+					foreground: variant.data.foreground,
+				}),
+			);
 		}
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
+		return Promise.all(promises);
 	}
 }

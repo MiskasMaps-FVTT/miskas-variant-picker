@@ -60,17 +60,18 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 		// @ts-expect-error
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
 		if (scene.getFlag(MODULE_NAME, "enabled")) {
-			const activateVariant = scene.getFlag(MODULE_NAME, "active");
+			const active = scene.getFlag(MODULE_NAME, "active");
+			const label = scene.getFlag(MODULE_NAME, `variants.${active}`).label ?? active;
 			const sceneEntry = entry.querySelector(".scene-name");
-			if (activateVariant !== undefined) {
-				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${activateVariant}</span>`;
+			if (active !== undefined) {
+				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${label}</span>`;
 			}
 		}
 	});
 });
 
 Hooks.on("renderSceneConfig", (...args) => {
-	(args[3].position.width as number) += 85;
+	(args[3].position.width as number) += 45;
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -186,8 +187,16 @@ Hooks.once("init", () => {
 		default: false,
 		type: Boolean,
 	});
+	game.settings.register(MODULE_NAME, "experimental", {
+		name: "Enable Experimental Features",
+		hint: "Enables WIP features that are not fully functional and have missing features. Currently no features are experimental",
+		config: true,
+		default: false,
+		type: Boolean,
+	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
+	Handlebars.registerHelper("variantpickerExperimental", () => game.settings.get("miskas-variant-picker", "experimental"));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);

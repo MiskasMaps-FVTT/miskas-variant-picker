@@ -10,7 +10,7 @@
               data-tooltip
               aria-label="Toggle Variants"></button>
       {{#if document.flags.miskas-variant-picker.enabled }}
-        <span style="padding-left: 10px;">Variants</span>
+        <span style="padding-left: 10px;">Add Variant</span>
         <button type="button"
                 class="icon fa-regular fa-square-plus inline-control"
                 data-action="addVariant"
@@ -36,10 +36,12 @@
                      align-items: center;
                      gap: 4px;
                      margin: 0"
-              data-variant-name="{{ this.name }}">
+              data-variant-name="{{this.name}}">
             <strong class="name" style="flex-grow: 1; flex-shrink: 1;">
-              {{ this.name }}
-              {{{ifThen (eq this.name ...document.flags.miskas-variant-picker.active) '<i class="fa-solid fa-bullseye" inert></i>' ""}}}
+              {{ ifThen this.label this.label this.name }}
+              {{#if (eq this.name ...document.flags.miskas-variant-picker.active) }}
+                <i class="fa-solid fa-bullseye" inert></i>
+              {{/if}}
             </strong>
             <span class="meta">{{ meta }}</span>
             <div class="controls flexrow">
@@ -51,7 +53,7 @@
               <button type="button"
                       class="inline-control icon fa-solid fa-edit fa-fw"
                       data-tooltip
-                      aria-label="Edit Variant"
+                      aria-label="Manage Variant"
                       data-action="editVariant"></button>
               <button type="button"
                       class="inline-control icon fa-solid fa-trash fa-fw"

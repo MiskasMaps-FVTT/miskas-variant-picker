@@ -1,15 +1,16 @@
 import { MODULE_NAME } from "./constants";
-import { getVariantObject, ObjectKeys, type ObjectTypes } from "./variant_opts";
+import { type BaseVariant, getVariantObject, ObjectKeys, type ObjectTypes } from "./variant_opts";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 	static override DEFAULT_OPTIONS = {
-		tag: "div",
+		tag: "form",
 		actions: {
 			toggleCollapse: (event: Event) => {
 				const target = event.target as HTMLButtonElement;
-				const menu = target.parentElement.nextElementSibling as HTMLElement;
+				const menu = target.form.querySelector(`#${target.id}-menu`) as HTMLElement;
+				console.log(menu)
 				if (menu.style.display === "block") {
 					menu.style.display = "none";
 				} else {
@@ -36,24 +37,53 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 				const id = target.parentElement.dataset.entryId;
 				const fieldset = target.closest("fieldset");
 				const kind = fieldset.dataset.kind as keyof ObjectTypes;
-				const type = fieldset.dataset.type as "create" | "delete";
+				const type = fieldset.dataset.type as "create" | "delete" | "update";
 				const variant = this.options.variant;
-				const data = variant.data[`${type}${kind.capitalize()}${type == "create" ? "Data" : "Ids"}`];
+				const data = variant.data[`${type}${kind.capitalize()}${type == "delete" ? "Ids" : "Data"}`];
 				const remove = data.findIndex((v: { _id: string }) => v._id == id);
 				data.splice(remove, 1);
 				target.parentElement.remove();
 				variant.setFlag();
+
+				if (type == "delete") {
+					this.options.variant.scene.createEmbeddedDocuments(
+						kind.capitalize(),
+						[
+							(this.options.variant.getBaseVariant().data[`create${kind.capitalize()}Data`] as any[]).find(
+								(x: any) => x._id == id,
+							),
+						],
+						{ keepId: true },
+					);
+				} else if (type == "create") {
+					this.options.variant.scene.deleteEmbeddedDocuments(kind.capitalize(), [id]);
+				} else if (type == "update") {
+					this.options.variant.scene.updateEmbeddedDocuments(kind.capitalize(), [
+						(this.options.variant.getBaseVariant().data[`create${kind.capitalize()}Data`] as any[]).find(
+							(x: any) => x._id == id,
+						),
+					]);
+				}
 			},
 			reload: function () {
 				const newVariant = getVariantObject(this.options.variant.scene, this.options.variant.name);
 				this.options.variant.data = newVariant.data;
-				this.updateMenus()
+				this.updateMenus();
 				this.render();
+			},
+			updateLabel: function (event: Event) {
+				console.log(event);
+				const target = event.target as HTMLButtonElement;
+				this.options.variant.scene.setFlag(
+					"miskas-variant-picker",
+					`variants.${this.options.variant.name}.label`,
+					(target.previousElementSibling as HTMLInputElement).value,
+				);
 			},
 		},
 		position: {
-			width: 300,
-			height: 300,
+			width: 400,
+			height: 500,
 		},
 		window: {
 			resizable: true,
@@ -78,24 +108,38 @@ export class VariantConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
 	updateMenus() {
 		this.menus = {};
-		const defaultVariant = this.options.variant.getBaseVariant();
+		const defaultVariant = this.options.variant.getBaseVariant() as BaseVariant;
 
 		for (const kind of ObjectKeys) {
-			this.menus[`create-${kind}`] = {
-				id: `create-${kind}`,
-				type: "create",
-				kind: kind,
-				label: `Added ${kind.capitalize()}s`,
-				entries: this.options.variant.data[`create${kind.capitalize()}Data`],
-			};
-			this.menus[`delete-${kind}`] = {
-				id: `delete-${kind}`,
-				type: "delete",
-				kind: kind,
-				label: `Removed ${kind.capitalize()}s`,
-				entries: defaultVariant.data[`create${kind.capitalize()}Data`].filter((x: any) => {
-					return !!this.options.variant.data[`delete${kind.capitalize()}Ids`].includes(x._id);
-				}),
+			const capitalKind = kind.capitalize();
+			this.menus[kind] = {
+				id: kind,
+				label: `${capitalKind}s`,
+				entries: [
+					{
+						id: `create-${kind}`,
+						type: "create",
+						kind: kind,
+						label: "Added",
+						entries: this.options.variant.data[`create${capitalKind}Data`],
+					},
+					{
+						id: `delete-${kind}`,
+						type: "delete",
+						kind: kind,
+						label: "Removed",
+						entries: defaultVariant.data[`create${capitalKind}Data`].filter((x) => {
+							return !!this.options.variant.data[`delete${capitalKind}Ids`].includes(x._id);
+						}),
+					},
+					{
+						id: `update-${kind}`,
+						type: "update",
+						kind: kind,
+						label: "Updated",
+						entries: this.options.variant.data[`update${capitalKind}Data`],
+					},
+				],
 			};
 		}
 	}

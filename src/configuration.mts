@@ -51,5 +51,6 @@ declare module "fvtt-types/configuration" {
 
 	interface SettingConfig {
 		"miskas-variant-picker.hideVariantMigrationOption": boolean;
+		"miskas-variant-picker.experimental": boolean;
 	}
 }
