@@ -20,12 +20,14 @@ export async function addVariantPopup(scene: Scene) {
 
 export function pickVariant(scene: Scene) {
 	const variants = scene.getFlag(MODULE_NAME, "variants");
+	const active = scene.getFlag(MODULE_NAME, "active");
 	const buttons: foundry.applications.api.DialogV2.Button<any>[] = [];
 	for (const v of Object.values(variants)) {
 		const variantName = v.name;
 		buttons.push({
 			label: variantName,
 			action: variantName,
+			default: active == variantName,
 			callback: () => {
 				activateVariant(scene, variantName);
 			},

@@ -33,18 +33,18 @@ function registerUpdateHooks(value: boolean) {
 
 Hooks.on("getSceneContextOptions", (_, menuItems) => {
 	menuItems.push({
-		callback: async (li) => {
-			pickVariant(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
+		callback: async (e) => {
+			pickVariant(fromUuidSync("Scene." + e.dataset.entryId) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (e) => {
-			return game.user.isGM && (fromUuidSync("Scene." + e.dataset.entryId) as Scene).getFlag(MODULE_NAME, "enabled");
+			return game.user.isGM && (fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene).getFlag(MODULE_NAME, "enabled");
 		}, // Key deprecated since V14, use visible instead
 		name: "Change Scene Variant", // Key deprecated since V14, use label instead
 	});
 	menuItems.push({
-		callback: async (li) => {
-			migrateVariants(fromUuidSync("Scene." + li.dataset.entryId) as Scene);
+		callback: async (e) => {
+			migrateVariants(fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-arrow-rotate-right"></i>`,
 		condition: () => {
@@ -91,7 +91,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 			},
 			saveVariant: {
 				name: "saveVariant",
-				title: "Update Variant",
+				title: "Save Changes",
 				icon: "fa-solid fa-floppy-disk",
 				order: 0,
 				button: true,
@@ -109,7 +109,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 			},
 			addVariant: {
 				name: "addVariant",
-				title: "Change Variant",
+				title: "Add Variant",
 				icon: "fa-regular fa-square-plus",
 				order: 2,
 				button: true,
@@ -188,7 +188,6 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
-	Handlebars.registerHelper("safe", (s: string) => new Handlebars.SafeString(s));
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);
