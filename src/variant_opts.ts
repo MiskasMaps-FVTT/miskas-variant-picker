@@ -72,6 +72,7 @@ type BaseVariantData = {
 	background: string;
 	foreground: string;
 	levelsData: unknown[]; // Type not defined in League-of-Foundry-Developers/foundry-vtt-types yet
+	sceneData: SceneData;
 } & {
 	[key in keyof ObjectTypes as `create${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
@@ -85,6 +86,8 @@ type VariantData = Partial<BaseVariantData> & {
 	[key in keyof ObjectTypes as `update${Capitalize<key>}Data`]?: ObjectTypes[key][];
 };
 
+type SceneData = Pick<Scene["schema"]["fields"], "name" | "environment" | "navName">;
+
 /**
  * All the data that exists in the base variant flag
  */
@@ -93,7 +96,6 @@ export interface VariantFlag {
 	label: string;
 	sceneUuid: string;
 	data: VariantData;
-	active?: boolean;
 }
 
 /**
@@ -150,6 +152,12 @@ export class BaseVariant implements VariantFlag {
 			this.data[`update${kind.capitalize()}Data`] = [] as any[];
 		}
 
+		this.data.sceneData = {
+			name: this.scene.name,
+			navName: this.scene.navName as any,
+			environment: this.scene.environment as any,
+		};
+
 		this.setFlag();
 	}
 
@@ -187,6 +195,17 @@ export class BaseVariant implements VariantFlag {
 				foreground: variant.data.foreground,
 			});
 		}
+
+		scene.update({
+			// @ts-expect-error
+			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
+			// @ts-expect-error
+			environment: new foundry.data.operators.ForcedReplacement(
+				variant.data?.sceneData?.environment ?? scene.environment,
+			),
+			// @ts-expect-error
+			navName: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.navName ?? scene.navName),
+		});
 
 		scene.setFlag(MODULE_NAME, "active", variant.name);
 		return promise;
@@ -264,6 +283,12 @@ export class Variant extends BaseVariant {
 			this.data[`update${capitalKind}Data`] = updates;
 		}
 
+		this.data.sceneData = {
+			name: this.scene.name,
+			navName: this.scene.navName as any,
+			environment: this.scene.environment as any,
+		};
+
 		this.setFlag();
 	}
 
@@ -309,6 +334,18 @@ export class Variant extends BaseVariant {
 		}
 
 		const promises = [] as Promise<any>[];
+
+		scene.update({
+			// @ts-expect-error
+			name: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.name ?? scene.name),
+			// @ts-expect-error
+			environment: new foundry.data.operators.ForcedReplacement(
+				variant.data?.sceneData?.environment ?? scene.environment,
+			),
+			// @ts-expect-error
+			navName: new foundry.data.operators.ForcedReplacement(variant.data?.sceneData?.navName ?? scene.navName),
+		});
+
 		if (variant.name != "Default") {
 			for (const kind of ObjectKeys) {
 				const capitalKind = kind.capitalize();

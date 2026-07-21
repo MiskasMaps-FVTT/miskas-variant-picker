@@ -15,3 +15,6 @@ Currently, variants allow you to have distinct walls, lights, sounds, tiles, reg
 
 ## Removal of old variants system
 The old variant system has been removed, but you can migrate old variants into the new system through a context menu option in the scene. This can be hidden in the module settings. 
+
+## Installing
+You can install the module using this manifest URL: https://github.com/MiskasMaps-FVTT/miskas-variant-picker/releases/latest/download/module.json
