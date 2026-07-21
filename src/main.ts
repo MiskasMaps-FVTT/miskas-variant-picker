@@ -109,7 +109,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 			},
 			addVariant: {
 				name: "addVariant",
-				title: "Change Variant",
+				title: "Add Variant",
 				icon: "fa-regular fa-square-plus",
 				order: 2,
 				button: true,
