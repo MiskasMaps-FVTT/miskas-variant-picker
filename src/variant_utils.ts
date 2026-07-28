@@ -7,7 +7,7 @@ export async function addVariantPopup(scene: Scene) {
 		scene.setFlag(MODULE_NAME, "active", "Default");
 	} else {
 		const { variantName } = await foundry.applications.api.DialogV2.input({
-			title: "Create Variant",
+			window: { title: "Create Variant" },
 			content: `
 			<div class="form-group">
 				<form>
