@@ -14,7 +14,6 @@ declare module "fvtt-types/configuration" {
 		Scene: {
 			"miskas-variant-picker": {
 				active: string;
-				enabled: boolean;
 				variants: { [key: string]: VariantFlag };
 				[variantName: `variants.${string}`]: VariantFlag;
 				/**

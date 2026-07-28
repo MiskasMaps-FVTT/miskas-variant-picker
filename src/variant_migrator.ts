@@ -96,7 +96,6 @@ export async function migrateVariants(scene: Scene) {
 			if (scene.getFlag(MODULE_NAME, `variants.${variant.name}`)) variant.setFlag();
 		});
 		// Delete the old flags
-		scene.setFlag(MODULE_NAME, "enabled", true);
 		scene.unsetFlag(MODULE_NAME, "filter");
 		scene.unsetFlag(MODULE_NAME, "regex");
 		scene.unsetFlag(MODULE_NAME, "prefix");

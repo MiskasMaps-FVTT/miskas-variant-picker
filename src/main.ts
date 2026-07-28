@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./constants.ts";
 import { VariantConfig } from "./variant_edit.ts";
 import { migrateVariants } from "./variant_migrator.ts";
-import { activateVariant, addVariant, deleteVariant, getVariantObject, updateActive } from "./variant_opts.ts";
+import { activateVariant, deleteVariant, getVariantObject, updateActive } from "./variant_opts.ts";
 import { addVariantPopup, pickVariant } from "./variant_utils.ts";
 
 function updateParent(doc: foundry.canvas.placeables.PlaceableObject) {
@@ -38,7 +38,12 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-swatchbook"></i>`,
 		condition: (e) => {
-			return game.user.isGM && (fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene).getFlag(MODULE_NAME, "enabled");
+			return (
+				game.user.isGM &&
+				!foundry.utils.isEmpty(
+					(fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene).getFlag(MODULE_NAME, "variants"),
+				)
+			);
 		}, // Key deprecated since V14, use visible instead
 		name: "Change Scene Variant", // Key deprecated since V14, use label instead
 	});
@@ -59,7 +64,7 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 	navEntries.forEach((entry) => {
 		// @ts-expect-error
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
-		if (scene.getFlag(MODULE_NAME, "enabled")) {
+		if (game.user.isGM && !foundry.utils.isEmpty(scene.getFlag(MODULE_NAME, "variants"))) {
 			const active = scene.getFlag(MODULE_NAME, "active");
 			const label = scene.getFlag(MODULE_NAME, `variants.${active}`).label ?? active;
 			const sceneEntry = entry.querySelector(".scene-name");
@@ -144,9 +149,6 @@ Hooks.once("init", () => {
 			const variantName = event.target.closest("[data-variant-name]").dataset.variantName as string;
 			if (await foundry.applications.api.DialogV2.confirm({ content: `Delete variant ${variantName}?` })) {
 				await deleteVariant(this.document, variantName);
-				if (Object.keys(this.document.getFlag(MODULE_NAME, "variants") ?? {}).length == 0) {
-					this.document.setFlag(MODULE_NAME, "enabled", false);
-				}
 			}
 		},
 		activateVariant: async function (event: Event) {
@@ -156,13 +158,6 @@ Hooks.once("init", () => {
 		},
 		updateVariant: async function () {
 			updateActive(this.document);
-		},
-		toggleVariants: function () {
-			const enabled = this.document.getFlag(MODULE_NAME, "enabled");
-			this.document.setFlag(MODULE_NAME, "enabled", !enabled);
-			if (!enabled) {
-				addVariant(this.document, "Default");
-			}
 		},
 		editVariant: function (event: Event) {
 			const variant = getVariantObject(
@@ -196,7 +191,9 @@ Hooks.once("init", () => {
 	});
 
 	Handlebars.registerHelper("objectLength", (obj: object) => Object.keys(obj ?? {}).length);
-	Handlebars.registerHelper("variantpickerExperimental", () => game.settings.get("miskas-variant-picker", "experimental"));
+	Handlebars.registerHelper("variantpickerExperimental", () =>
+		game.settings.get("miskas-variant-picker", "experimental"),
+	);
 
 	// @ts-expect-error ForgeVTT exclusive variable
 	game.isForge = !!(globalThis.ForgeVTT && ForgeVTT.usingTheForge);

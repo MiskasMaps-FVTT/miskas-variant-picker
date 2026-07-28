@@ -4,6 +4,7 @@ export function addVariant(scene: Scene, variantName: string) {
 		const variant = variantName == "Default" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
 		variant.update();
 		scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
+		ui.notifications.success(`Created variant ${variantName}`);
 	}
 }
 
