@@ -2,9 +2,13 @@ import { MODULE_NAME } from "./constants";
 import { activateVariant, addVariant } from "./variant_opts";
 
 export async function addVariantPopup(scene: Scene) {
-	const { variantName } = await foundry.applications.api.DialogV2.input({
-		window: { title: "Create Variant" },
-		content: `
+	if (scene.getFlag(MODULE_NAME, "variants.Default") === undefined) {
+		addVariant(scene, "Default");
+		scene.setFlag(MODULE_NAME, "active", "Default");
+	} else {
+		const { variantName } = await foundry.applications.api.DialogV2.input({
+			window: { title: "Create Variant" },
+			content: `
 			<div class="form-group">
 				<form>
 					<label>Name</label>
@@ -14,8 +18,9 @@ export async function addVariantPopup(scene: Scene) {
 				</form>
 			</div>
 			`,
-	});
-	addVariant(scene, variantName as string);
+		});
+		addVariant(scene, variantName as string);
+	}
 }
 
 export function pickVariant(scene: Scene) {
