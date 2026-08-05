@@ -43,7 +43,7 @@ declare module "fvtt-types/configuration" {
 				/**
 					@deprecated Since version 2.0.0
 				*/
-				prefix: string; // @todo Remove after Variants2 is completed
+				prefix: string; // TODO: Remove after Variants2 is completed
 			};
 		};
 	}
