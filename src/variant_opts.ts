@@ -1,11 +1,13 @@
 import { MODULE_NAME } from "./constants";
-export function addVariant(scene: Scene, variantName: string) {
+export async function addVariant(scene: Scene, variantName: string): Promise<Variant | BaseVariant | undefined> {
 	if (scene.getFlag(MODULE_NAME, `variants.${variantName}`) === undefined) {
 		const variant = variantName == "Default" ? new BaseVariant(scene) : new Variant(variantName, scene, {});
 		variant.update();
-		scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
+		await scene.setFlag(MODULE_NAME, `variants.${variantName}`, variant);
 		ui.notifications.success(`Created variant ${variantName}`);
+		return variant;
 	}
+	return undefined;
 }
 
 export function activateVariant(scene: Scene, variantName: string) {
@@ -40,7 +42,9 @@ export function getVariant(scene: Scene, variantName: string) {
 	return scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 }
 
-export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant {
+export function getVariantObject(scene: Scene, variantName: "Default"): BaseVariant | undefined;
+export function getVariantObject(scene: Scene, variantName: string): Variant | undefined;
+export function getVariantObject(scene: Scene, variantName: string): Variant | BaseVariant | undefined {
 	const variantFlags = scene.getFlag(MODULE_NAME, `variants.${variantName}`);
 	if (variantFlags === undefined) return undefined;
 	if (variantFlags?.name == "Default") {
@@ -72,7 +76,7 @@ const EmbeddedKeys: Record<keyof ObjectTypes, keyof Scene.Metadata.Embedded> = {
 type BaseVariantData = {
 	background: string;
 	foreground: string;
-	levelsData: unknown[]; // Type not defined in League-of-Foundry-Developers/foundry-vtt-types yet
+	levelsData: foundry.documents.Level.CreateData[];
 	sceneData: SceneData;
 } & {
 	[key in keyof ObjectTypes as `create${Capitalize<key>}Data`]?: ObjectTypes[key][];
@@ -236,7 +240,10 @@ export class Variant extends BaseVariant {
 
 		if (foundry.utils.isNewerVersion(game.version, 14)) {
 			// @ts-expect-error
-			this.data.levelsData = this.scene.levels.values().toArray();
+			this.data.levelsData = this.scene.levels
+				.values()
+				.map((l: Level) => foundry.utils.deepClone(l._source))
+				.toArray();
 		} else {
 			this.data.background = this.scene.background.src;
 			this.data.foreground = this.scene.foreground;
@@ -293,7 +300,7 @@ export class Variant extends BaseVariant {
 		this.setFlag();
 	}
 
-	override async activate(): Promise<any> {
+	override async activate(): Promise<void> {
 		// Validate variant data and correct them
 		for (const kind of ObjectKeys) {
 			const baseVariant = this.getBaseVariant();

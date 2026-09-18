@@ -52,8 +52,9 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 			migrateVariants(fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-arrow-rotate-right"></i>`,
-		condition: () => {
-			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption");
+		condition: (e) => {
+			const scene = fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene
+			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption") && !scene.getFlag(MODULE_NAME, "migrated");
 		}, // Key deprecated since V14, use visible instead
 		name: "Migrate to Variants 2", // Key deprecated since V14, use label instead
 	});
@@ -66,7 +67,7 @@ Hooks.on("renderSceneNavigation", (_, e) => {
 		const scene = fromUuidSync("Scene." + entry.dataset.sceneId) as Scene;
 		if (game.user.isGM && !foundry.utils.isEmpty(scene.getFlag(MODULE_NAME, "variants"))) {
 			const active = scene.getFlag(MODULE_NAME, "active");
-			const label = scene.getFlag(MODULE_NAME, `variants.${active}`).label ?? active;
+			const label = scene.getFlag(MODULE_NAME, `variants.${active}`)?.label ?? active;
 			const sceneEntry = entry.querySelector(".scene-name");
 			if (active !== undefined) {
 				sceneEntry.innerHTML += ` <span style="opacity: 0.5;">#${label}</span>`;

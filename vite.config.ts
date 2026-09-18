@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	publicDir: "public",
 	build: {
-		sourcemap: false,
+		sourcemap: true,
 		outDir: "dist",
 		emptyOutDir: false,
 		lib: {

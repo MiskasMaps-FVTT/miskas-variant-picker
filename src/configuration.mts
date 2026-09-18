@@ -15,6 +15,7 @@ declare module "fvtt-types/configuration" {
 			"miskas-variant-picker": {
 				active: string;
 				variants: { [key: string]: VariantFlag };
+				migrated: boolean;
 				[variantName: `variants.${string}`]: VariantFlag;
 				/**
 					@deprecated Since version 2.0.0
