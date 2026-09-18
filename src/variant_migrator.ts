@@ -95,6 +95,7 @@ export async function migrateVariants(scene: Scene) {
 		migrated_variants.forEach((variant) => {
 			if (!scene.getFlag(MODULE_NAME, `variants.${variant.name}`)) variant.setFlag();
 		});
+		scene.setFlag(MODULE_NAME, "migrated", true)
 		ui.notifications.success(`Migrated variants of scene ${scene.name}`);
 		// Delete the old flags
 		scene.unsetFlag(MODULE_NAME, "filter");
