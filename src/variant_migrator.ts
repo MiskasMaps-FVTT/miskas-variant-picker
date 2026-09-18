@@ -1,6 +1,6 @@
 import { MODULE_NAME } from "./constants.ts";
 import type { VariantFilter, Variants } from "./types.ts";
-import { Variant } from "./variant_opts.ts";
+import { addVariant, BaseVariant, getVariant, getVariantObject, Variant } from "./variant_opts.ts";
 
 function getVariantName(str: string, regex: RegExp) {
 	regex = regex || /[0-9]+x[0-9]+[-._](?:[0-9]+ppi-)?(.+)\.(?:webp|jpg|png)$/;
@@ -32,6 +32,7 @@ function filterVariants(variants: Variants, filter: VariantFilter): void | false
 
 export async function migrateVariants(scene: Scene) {
 	try {
+		const default_variant = getVariantObject(scene, "Default");
 		// @ts-expect-error V14
 		const background = game.release.generation >= 14 ? scene.firstLevel.background.src : scene.background.src;
 		const regex = scene.getFlag(MODULE_NAME, "regex.scene") ?? /.*-([0-9]+x[0-9]+)?/;
@@ -49,7 +50,7 @@ export async function migrateVariants(scene: Scene) {
 		const browse = game.isForge ? FilePicker.browse : foundry.applications.apps.FilePicker.browse;
 		const filePickerResult = await browse("data", path);
 		const maps = filePickerResult.files.filter((map) => map.search(prefix) > 0);
-		const variants = new Map();
+		const variants: Map<string, string> = new Map();
 
 		for (const map of maps) {
 			variants.set(map, getVariantName(map, scene.getFlag(MODULE_NAME, "regex.variant")));
@@ -57,25 +58,16 @@ export async function migrateVariants(scene: Scene) {
 
 		if (filter) filterVariants(variants, filter);
 
-		const migrated_variants: Variant[] = [];
-		variants.forEach((variant_name, map) => {
-			migrated_variants.push(
-				new Variant(variant_name, scene, {
-					background: map,
-				}),
-			);
-		});
-
-		if (scene.getFlag(MODULE_NAME, "variants.Default") === undefined) {
-			const buttons = migrated_variants.map((variant, index) => {
-				const name = variant.name;
-				return {
-					action: name,
-					label: name,
+		if (default_variant === undefined) {
+			const buttons: foundry.applications.api.DialogV2.Button[] = [];
+			variants.forEach((variant_name, bg) => {
+				buttons.push({
+					action: variant_name,
+					label: variant_name,
 					callback: () => {
-						return index;
+						return bg;
 					},
-				};
+				});
 			});
 			await foundry.applications.api.DialogV2.wait({
 				window: { title: "Select Default Variant" },
@@ -83,25 +75,32 @@ export async function migrateVariants(scene: Scene) {
 				modal: true,
 				rejectClose: true,
 				buttons: buttons,
-				submit: async (index: number) => {
-					migrated_variants[index].name = "Default";
+				submit: async (bg: string) => {
+					const dv = await addVariant(scene, "Default");
+					dv.data.levelsData[0].background.src = bg;
+					dv.setFlag();
+					variants.delete(bg);
 				},
 			}).catch(() => {
 				throw new Error("Dialog closed");
 			});
 		}
 
-		// Set the migrated variants
-		migrated_variants.forEach((variant) => {
-			if (!scene.getFlag(MODULE_NAME, `variants.${variant.name}`)) variant.setFlag();
+		variants.forEach((variant_name, map) => {
+			const v = new Variant(variant_name, scene, {});
+			v.update();
+			v.data.levelsData[0].background.src = map;
+			console.log(v.data.levelsData[0]);
+			v.setFlag();
 		});
-		scene.setFlag(MODULE_NAME, "migrated", true)
-		ui.notifications.success(`Migrated variants of scene ${scene.name}`);
 		// Delete the old flags
 		scene.unsetFlag(MODULE_NAME, "filter");
 		scene.unsetFlag(MODULE_NAME, "regex");
 		scene.unsetFlag(MODULE_NAME, "prefix");
+		scene.setFlag(MODULE_NAME, "migrated", true);
+
+		ui.notifications.success(`Successfully migrated variants of scene ${scene.name}`);
 	} catch (err) {
-		ui.notifications.error(`Failed to migrate variants: ${err}`);
+		ui.notifications.error(`Failed to migrate variants of scene ${scene.name}: ${err}`);
 	}
 }
