@@ -93,8 +93,9 @@ export async function migrateVariants(scene: Scene) {
 
 		// Set the migrated variants
 		migrated_variants.forEach((variant) => {
-			if (scene.getFlag(MODULE_NAME, `variants.${variant.name}`)) variant.setFlag();
+			if (!scene.getFlag(MODULE_NAME, `variants.${variant.name}`)) variant.setFlag();
 		});
+		ui.notifications.success(`Migrated variants of scene ${scene.name}`);
 		// Delete the old flags
 		scene.unsetFlag(MODULE_NAME, "filter");
 		scene.unsetFlag(MODULE_NAME, "regex");
@@ -102,6 +103,4 @@ export async function migrateVariants(scene: Scene) {
 	} catch (err) {
 		ui.notifications.error(`Failed to migrate variants: ${err}`);
 	}
-
-	ui.notifications.success(`Migrated variants of scene ${scene.name}`);
 }
