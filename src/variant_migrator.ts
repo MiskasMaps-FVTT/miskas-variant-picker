@@ -93,6 +93,7 @@ export async function migrateVariants(scene: Scene) {
 			console.log(v.data.levelsData[0]);
 			v.setFlag();
 		});
+
 		// Delete the old flags
 		scene.unsetFlag(MODULE_NAME, "filter");
 		scene.unsetFlag(MODULE_NAME, "regex");
