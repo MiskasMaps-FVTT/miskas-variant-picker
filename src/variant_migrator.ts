@@ -103,4 +103,6 @@ export async function migrateVariants(scene: Scene) {
 	} catch (err) {
 		ui.notifications.error(`Failed to migrate variants of scene ${scene.name}: ${err}`);
 	}
+
+	ui.notifications.success(`Migrated variants of scene ${scene.name}`);
 }
