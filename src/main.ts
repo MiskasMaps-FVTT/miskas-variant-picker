@@ -52,8 +52,13 @@ Hooks.on("getSceneContextOptions", (_, menuItems) => {
 			migrateVariants(fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene);
 		}, // Key deprecated since V14, use onClick instead
 		icon: `<i class="fa-solid fa-arrow-rotate-right"></i>`,
-		condition: () => {
-			return game.user.isGM && !game.settings.get(MODULE_NAME, "hideVariantMigrationOption");
+		condition: (e) => {
+			const scene = fromUuidSync("Scene." + (e.dataset.entryId ?? e.dataset.sceneId)) as Scene;
+			return (
+				game.user.isGM &&
+				!game.settings.get(MODULE_NAME, "hideVariantMigrationOption") &&
+				!scene.getFlag(MODULE_NAME, "migrated")
+			);
 		}, // Key deprecated since V14, use visible instead
 		name: "Migrate to Variants 2", // Key deprecated since V14, use label instead
 	});

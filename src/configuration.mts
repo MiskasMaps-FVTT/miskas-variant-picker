@@ -16,6 +16,7 @@ declare module "fvtt-types/configuration" {
 				active: string;
 				variants: { [key: string]: VariantFlag };
 				[variantName: `variants.${string}`]: VariantFlag;
+				migrated: boolean;
 				/**
 					@deprecated Since version 2.0.0
 				*/
